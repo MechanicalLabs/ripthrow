@@ -1,3 +1,4 @@
+export { bail } from "./bail";
 export { Err } from "./err";
 export { isErr } from "./is-err";
 export { isOk } from "./is-ok";

@@ -11,6 +11,7 @@
 export * from "./consumers";
 export * from "./factories";
 export * from "./operators";
+export * from "./report";
 export * from "./result-builder";
 export type * from "./types";
 export * from "./utils";

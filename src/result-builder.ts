@@ -4,11 +4,13 @@ import { unwrapOr } from "./consumers/unwrap-or";
 import { isErr } from "./factories/is-err";
 import { isOk } from "./factories/is-ok";
 import { andThen } from "./operators/and-then";
+import { context as contextOp } from "./operators/context";
 import { map } from "./operators/map";
 import { mapErr } from "./operators/map-err";
 import { orElse } from "./operators/or-else";
 import { tap } from "./operators/tap";
 import { tapErr } from "./operators/tap-err";
+import type { Report } from "./report";
 import type { Result } from "./types/result";
 
 /**
@@ -180,6 +182,13 @@ export class ResultBuilder<T, E> {
    */
   unwrap(): T {
     return unwrap(this._result);
+  }
+
+  /**
+   * Attaches context to the error if it exists.
+   */
+  context(message: string, help?: string): ResultBuilder<T, Report> {
+    return new ResultBuilder(contextOp(this._result, message, help));
   }
 }
 

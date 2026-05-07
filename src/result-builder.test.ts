@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { Err, Ok, safe } from "./factories";
 import { build, ResultBuilder } from "./result-builder";
 
-describe("ResultBuilder", () => {
+describe("ResultBuilder: Chaining", () => {
   test("should chain operations fluently", () => {
     const res = build(Ok(1))
       .map((n) => n + 1)
@@ -32,7 +32,9 @@ describe("ResultBuilder", () => {
 
     expect(res).toBe(1);
   });
+});
 
+describe("ResultBuilder: Static Methods", () => {
   test("static methods should work correctly", () => {
     const ok = ResultBuilder.ok("success").unwrap();
     expect(ok).toBe("success");
@@ -52,5 +54,17 @@ describe("ResultBuilder", () => {
 
     const any = ResultBuilder.any([Err("a"), Ok("found")]).unwrap();
     expect(any).toBe("found");
+  });
+});
+
+describe("ResultBuilder: Context", () => {
+  test("should support context method", () => {
+    const res = ResultBuilder.err("fail").context("wrapped", "help").result;
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.error.message).toBe("wrapped");
+      expect(res.error.help).toBe("help");
+    }
   });
 });
