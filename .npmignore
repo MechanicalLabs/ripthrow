@@ -1,0 +1,18 @@
+# Documentation
+docs/
+.github/
+
+# Configuration
+biome.json
+knip.json
+tsconfig.json
+typedoc.json
+bun.lock
+
+# Scripts & Hooks
+hooks/
+install-hooks.sh
+
+# Source control
+.gitignore
+.npmignore
