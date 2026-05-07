@@ -1,2 +1,1 @@
-// biome-ignore lint/suspicious/noConsole: hello world
-console.log("hello, world");
+export type * from "./types";
