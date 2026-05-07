@@ -12,6 +12,9 @@ import type { Result } from "../types";
  * @param fn The function to apply to the error value if it's Err.
  * @returns A new Result with the mapped error value or the original success.
  *
+ * @category Operators
+ * @see map
+ * @see orElse
  * @example
  * const res = Err("not found");
  * const wrapped = mapErr(res, (e) => new Error(e)); // Err(Error("not found"))

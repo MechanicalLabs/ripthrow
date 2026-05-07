@@ -11,6 +11,8 @@ import { Ok } from "./ok";
  * @param fn The function to execute.
  * @returns An Ok result with the return value, or an Err result with the thrown error.
  *
+ * @category Factories
+ * @see safeAsync
  * @example
  * const res = safe(() => JSON.parse('{"valid": true}'));
  * if (res.ok) console.log(res.value);

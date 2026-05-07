@@ -9,6 +9,8 @@ import type { Result } from "../types";
  * @param defaultValue The value to return if the Result is an Err.
  * @returns The contained value if Ok, otherwise the default value.
  *
+ * @category Consumers
+ * @see match
  * @example
  * const res = Err("error");
  * const val = unwrapOr(res, "default"); // "default"

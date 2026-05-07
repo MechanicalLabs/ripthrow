@@ -12,6 +12,8 @@ import { Ok } from "./ok";
  * @param promise The Promise to convert.
  * @returns A Promise resolving to an Ok result with the data, or an Err result with the error.
  *
+ * @category Factories
+ * @see safe
  * @example
  * const res = await safeAsync(fetch("https://api.example.com"));
  * if (res.ok) console.log(await res.value.json());

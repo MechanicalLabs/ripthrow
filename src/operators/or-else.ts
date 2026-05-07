@@ -12,6 +12,8 @@ import type { Result } from "../types";
  * @param fn The function to apply to the error value if it's Err.
  * @returns A new Result representing the chained operation with potential recovery.
  *
+ * @category Operators
+ * @see mapErr
  * @example
  * const res = Err("failed");
  * const recovered = orElse(res, () => Ok("default")); // Ok("default")

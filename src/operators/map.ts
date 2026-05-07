@@ -12,6 +12,9 @@ import type { Result } from "../types";
  * @param fn The function to apply to the success value if it's Ok.
  * @returns A new Result with the mapped success value or the original error.
  *
+ * @category Operators
+ * @see mapErr
+ * @see andThen
  * @example
  * const res = Ok(1);
  * const doubled = map(res, (n) => n * 2); // Ok(2)
