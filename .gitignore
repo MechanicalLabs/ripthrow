@@ -1,3 +1,6 @@
+# Documentation
+docs/api/
+
 # dependencies (bun install)
 node_modules
 
