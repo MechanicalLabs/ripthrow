@@ -3,10 +3,17 @@ import { Err } from "./err";
 import { Ok } from "./ok";
 
 /**
- * Executes a synchronous function and wraps the result in a Result.
- * Captures any thrown errors.
+ * Executes a synchronous function and wraps its return value in an Ok result.
+ * If the function throws an error, it captures it and wraps it in an Err result.
+ *
+ * @template T The type of the success value.
+ * @template E The type of the error value. Defaults to Error.
  * @param fn The function to execute.
  * @returns An Ok result with the return value, or an Err result with the thrown error.
+ *
+ * @example
+ * const res = safe(() => JSON.parse('{"valid": true}'));
+ * if (res.ok) console.log(res.value);
  */
 export function safe<T, E = Error>(fn: () => T): Result<T, E> {
   try {
