@@ -49,10 +49,14 @@ jobs:
           fi
           
           if [ -d "docs/api" ]; then
-            cp -rv docs/api/* wiki_repo/
+            find docs/api -type f -name "*.md" -exec cp -v {} wiki_repo/ \;
           fi
           
           cd wiki_repo
+          
+          if [ -f "globals.md" ] && [ -f "API-Reference.md" ]; then
+            rm globals.md
+          fi
           
           if [[ -n "$(git status --porcelain)" ]]; then
             git add .
