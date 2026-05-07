@@ -1,0 +1,66 @@
+name: Sync Wiki
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install
+        run: bun install
+
+      - name: Generate API Docs
+        run: bun x typedoc
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync to Wiki
+        env:
+          WIKI_REPO: "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git"
+        run: |
+          git clone "$WIKI_REPO" wiki_repo || {
+            echo "Wiki repo not found or not initialized."
+            exit 0
+          }
+          
+          rm -rf wiki_repo/*
+          
+          if [ -d "docs/manual" ]; then
+            cp -rv docs/manual/* wiki_repo/
+          fi
+          
+          if [ -d "docs/api" ]; then
+            cp -rv docs/api/* wiki_repo/
+          fi
+          
+          cd wiki_repo
+          
+          API_FILE=$(find . -maxdepth 1 -name "API-Reference.md" -print -quit)
+          if [ -n "$API_FILE" ]; then
+            mv "$API_FILE" Home.md
+          fi
+          
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add .
+            git commit -m "docs: auto-sync from main branch"
+            git push origin HEAD:master || git push origin HEAD:main
+          fi
