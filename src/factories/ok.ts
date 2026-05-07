@@ -14,6 +14,6 @@ import type { Result } from "../types";
  * const res = Ok(42);
  * if (res.ok) console.log(res.value); // 42
  */
-export function Ok<T, E>(value: T): Result<T, E> {
-  return { ok: true, value };
+export function Ok<T = void, E = unknown>(value?: T): Result<T, E> {
+  return { ok: true, value: value as T };
 }

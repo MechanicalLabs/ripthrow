@@ -34,4 +34,12 @@ describe("Ok", () => {
       expect(resultArr.value).toBe(arr);
     }
   });
+
+  test("should handle void (no arguments)", () => {
+    const result = Ok();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toBeUndefined();
+    }
+  });
 });
