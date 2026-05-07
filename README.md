@@ -1,6 +1,6 @@
 # ripthrow
 
-**Zero-overhead, type-safe error handling for TypeScript.**
+**Zero-dependency, type-safe error handling for TypeScript.**
 
 `ripthrow` is a lightweight library inspired by Rust's `Result` type and the proposed ECMAScript `?=` operator. It allows you to handle success and failure in a structured way, avoiding `try/catch` blocks and making error states explicit in your types.
 
