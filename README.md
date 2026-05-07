@@ -20,17 +20,43 @@ bun add github:MechanicalLabs/ripthrow
 
 ## Quick Start
 
+### Explicit errors with `Ok` and `Err`
+
+Functions return `Result`, making failure paths visible in the type signature:
+
 ```typescript
-import { safe, match } from "ripthrow";
+import { Ok, Err, match, type Result } from "ripthrow";
 
-const res = safe(() => JSON.parse('{"status": "ok"}'));
+function getUser(id: string): Result<{ id: string; name: string }, string> {
+  if (!id) {
+     return Err("ID is required");
+  }
 
-const message = match(res, {
-  ok: (data) => `Success: ${data.status}`,
-  err: (error) => `Error: ${error.message}`
+  return Ok({ id, name: "Alice" });
+}
+
+const result = getUser("123");
+
+match(result, {
+  ok: (user) => console.log(user.name),
+  err: (msg) => console.error(`getUser function failed: ${msg}`),
 });
+```
 
-console.log(message);
+### Wrap throwing code with `safe`
+
+`safe` catches exceptions and returns a `Result` — no `try/catch`:
+
+```typescript
+import { safe, build } from "ripthrow";
+
+const raw = '{"valid": true}';
+
+const isValid = build(safe(() => JSON.parse(raw)))
+  .map((data: any) => data.valid)
+  .unwrapOr(false);
+
+console.log(isValid); // true
 ```
 
 ## Why ripthrow?
