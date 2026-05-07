@@ -4,7 +4,7 @@
 - [[Getting Started|Getting-Started]]
 - [[Functional Operators|Functional-Operators]]
 - [[Error Handling Patterns|Error-Handling-Patterns]]
-- [[API Reference|Home]]
+- [[API Reference|API-Reference]]
 
 ### Resources
 

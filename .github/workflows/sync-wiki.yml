@@ -54,11 +54,6 @@ jobs:
           
           cd wiki_repo
           
-          API_FILE=$(find . -maxdepth 1 -name "API-Reference.md" -print -quit)
-          if [ -n "$API_FILE" ]; then
-            mv "$API_FILE" Home.md
-          fi
-          
           if [[ -n "$(git status --porcelain)" ]]; then
             git add .
             git commit -m "docs: auto-sync from main branch"

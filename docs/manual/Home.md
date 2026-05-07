@@ -5,7 +5,7 @@
 - **[[Getting Started|Getting-Started]]**: Installation and your first results.
 - **[[Functional Operators|Functional-Operators]]**: How to use `map`, `andThen`, and `tap`.
 - **[[Error Handling Patterns|Error-Handling-Patterns]]**: Best practices and advanced utilities like `all` and `any`.
-- **[[API Reference|Home]]**: Auto-generated documentation from JSDoc.
+- **[[API Reference|API-Reference]]**: Auto-generated documentation from JSDoc.
 
 ## Why use Result instead of Throw?
 
