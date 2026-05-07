@@ -13,5 +13,6 @@ export * from "./factories";
 export * from "./operators";
 export * from "./report";
 export * from "./result-builder";
+export * from "./result-builder-async";
 export type * from "./types";
 export * from "./utils";

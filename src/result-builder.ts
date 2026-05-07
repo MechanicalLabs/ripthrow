@@ -54,18 +54,6 @@ export class ResultBuilder<T, E> {
   }
 
   /**
-   * Converts a Promise into a ResultBuilder.
-   */
-  static async safeAsync<U, F = Error>(promise: Promise<U>): Promise<ResultBuilder<U, F>> {
-    try {
-      const data = await promise;
-      return ResultBuilder.ok(data);
-    } catch (e) {
-      return ResultBuilder.err(e as F);
-    }
-  }
-
-  /**
    * Combines multiple Results into a single ResultBuilder.
    */
   static all<U, F>(results: Result<U, F>[]): ResultBuilder<U[], F> {
