@@ -1,6 +1,30 @@
 {
   "name": "ripthrow",
   "module": "src/index.ts",
+  "description": "Zero-overhead, type-safe error handling for TypeScript.",
+  "keywords": [
+    "result",
+    "error-handling",
+    "typescript",
+    "functional",
+    "type-safe"
+  ],
+  "author": "Sir Cesarium",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MechanicalLabs/ripthrow.git"
+  },
+  "sideEffects": false,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "src",
+    "!src/**/*.test.ts"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "devDependencies": {
     "@biomejs/biome": "2.4.14",
@@ -12,6 +36,8 @@
     "typescript": "^6.0.3"
   },
   "scripts": {
-    "knip": "knip"
+    "knip": "knip",
+    "lint": "biome check .",
+    "format": "biome format --write ."
   }
 }
