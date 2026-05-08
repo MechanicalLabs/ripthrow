@@ -14,11 +14,36 @@ import { tapErr } from "./operators/tap-err";
 import type { Report } from "./report";
 import type { AsyncResult, Result } from "./types/result";
 
+type Op = (
+  r: Result<unknown, unknown>,
+) => Result<unknown, unknown> | Promise<Result<unknown, unknown>>;
+
 export class AsyncResultBuilder<T, E> {
   private readonly _promise: AsyncResult<T, E>;
+  private readonly _ops: Op[];
+  private _executed: AsyncResult<T, E> | null = null;
 
-  constructor(promise: AsyncResult<T, E>) {
+  constructor(promise: AsyncResult<T, E>, ops?: Op[]) {
     this._promise = promise;
+    this._ops = ops ?? [];
+  }
+
+  private execute(): AsyncResult<T, E> {
+    if (this._executed) {
+      return this._executed;
+    }
+    if (this._ops.length === 0) {
+      this._executed = this._promise;
+    } else {
+      this._executed = this._promise.then(async (r) => {
+        let current: Result<unknown, unknown> = r;
+        for (const op of this._ops) {
+          current = await op(current);
+        }
+        return current as Result<T, E>;
+      });
+    }
+    return this._executed;
   }
 
   static ok<U = void, F = unknown>(value?: U): AsyncResultBuilder<U, F> {
@@ -70,53 +95,69 @@ export class AsyncResultBuilder<T, E> {
   }
 
   get result(): AsyncResult<T, E> {
-    return this._promise;
+    return this.execute();
   }
 
   get isOk(): Promise<boolean> {
-    return this._promise.then(isOk);
+    return this.execute().then(isOk);
   }
 
   get isErr(): Promise<boolean> {
-    return this._promise.then(isErr);
+    return this.execute().then(isErr);
   }
 
   map<R>(fn: (value: T) => R): AsyncResultBuilder<R, E> {
-    return new AsyncResultBuilder(this._promise.then((r) => map(r, fn)));
+    const op: Op = (r: Result<unknown, unknown>) => map(r as Result<T, E>, fn);
+    return new AsyncResultBuilder<R, E>(this._promise as unknown as AsyncResult<R, E>, [
+      ...this._ops,
+      op,
+    ]);
   }
 
   mapErr<F>(fn: (error: E) => F): AsyncResultBuilder<T, F> {
-    return new AsyncResultBuilder(this._promise.then((r) => mapErr(r, fn)));
+    const op: Op = (r: Result<unknown, unknown>) => mapErr(r as Result<T, E>, fn);
+    return new AsyncResultBuilder<T, F>(this._promise as unknown as AsyncResult<T, F>, [
+      ...this._ops,
+      op,
+    ]);
   }
 
   andThen<R>(fn: (value: T) => Result<R, E> | AsyncResult<R, E>): AsyncResultBuilder<R, E> {
-    return new AsyncResultBuilder(
-      this._promise.then((r) => {
-        if (!r.ok) {
-          return r;
-        }
-        return fn(r.value);
-      }),
-    );
+    const op: Op = (r: Result<unknown, unknown>) => {
+      const res = r as Result<T, E>;
+      if (!res.ok) {
+        return res;
+      }
+      return fn(res.value);
+    };
+    return new AsyncResultBuilder<R, E>(this._promise as unknown as AsyncResult<R, E>, [
+      ...this._ops,
+      op,
+    ]);
   }
 
   orElse<F>(fn: (error: E) => Result<T, F> | AsyncResult<T, F>): AsyncResultBuilder<T, F> {
-    return new AsyncResultBuilder(
-      this._promise.then((r) => {
-        if (r.ok) {
-          return r;
-        }
-        return fn(r.error);
-      }),
-    );
+    const op: Op = (r: Result<unknown, unknown>) => {
+      const res = r as Result<T, E>;
+      if (res.ok) {
+        return res;
+      }
+      return fn(res.error);
+    };
+    return new AsyncResultBuilder<T, F>(this._promise as unknown as AsyncResult<T, F>, [
+      ...this._ops,
+      op,
+    ]);
   }
 
   tap(fn: (value: T) => void): AsyncResultBuilder<T, E> {
-    return new AsyncResultBuilder(this._promise.then((r) => tap(r, fn)));
+    const op: Op = (r: Result<unknown, unknown>) => tap(r as Result<T, E>, fn);
+    return new AsyncResultBuilder<T, E>(this._promise, [...this._ops, op]);
   }
 
   tapErr(fn: (error: E) => void): AsyncResultBuilder<T, E> {
-    return new AsyncResultBuilder(this._promise.then((r) => tapErr(r, fn)));
+    const op: Op = (r: Result<unknown, unknown>) => tapErr(r as Result<T, E>, fn);
+    return new AsyncResultBuilder<T, E>(this._promise, [...this._ops, op]);
   }
 
   context(
@@ -124,19 +165,24 @@ export class AsyncResultBuilder<T, E> {
     help?: string,
     meta?: Record<string, unknown>,
   ): AsyncResultBuilder<T, Report> {
-    return new AsyncResultBuilder(this._promise.then((r) => contextOp(r, message, help, meta)));
+    const op: Op = (r: Result<unknown, unknown>) =>
+      contextOp(r as Result<T, E>, message, help, meta);
+    return new AsyncResultBuilder<T, Report>(this._promise as unknown as AsyncResult<T, Report>, [
+      ...this._ops,
+      op,
+    ]);
   }
 
   match<R>(handlers: { ok: (value: T) => R; err: (error: E) => R }): Promise<R> {
-    return this._promise.then((r) => match(r, handlers));
+    return this.execute().then((r) => match(r, handlers));
   }
 
   unwrapOr(defaultValue: T): Promise<T> {
-    return this._promise.then((r) => unwrapOr(r, defaultValue));
+    return this.execute().then((r) => unwrapOr(r, defaultValue));
   }
 
   unwrap(): Promise<T> {
-    return this._promise.then((r) => unwrap(r));
+    return this.execute().then((r) => unwrap(r));
   }
 }
 
