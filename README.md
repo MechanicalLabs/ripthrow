@@ -15,7 +15,9 @@
 ## Installation
 
 ```bash
-bun add github:MechanicalLabs/ripthrow
+bun add ripthrow
+# or
+npm install ripthrow
 ```
 
 ## Quick Start

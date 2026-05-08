@@ -5,7 +5,9 @@ This guide covers the basics of using `ripthrow` to handle errors effectively.
 ## Installation
 
 ```bash
-bun add github:MechanicalLabs/ripthrow
+bun add ripthrow
+# or
+npm install ripthrow
 ```
 
 ## Core Concepts
