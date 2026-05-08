@@ -1,11 +1,15 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
+  "files": {
+    "includes": ["./src/**/*.ts"]
+  },
   "formatter": {
     "indentStyle": "space",
     "indentWidth": 2,
     "lineEnding": "lf",
     "lineWidth": 100,
-    "trailingNewline": true
+    "trailingNewline": true,
+    "includes": ["./**/*.ts"]
   },
   "javascript": {
     "formatter": {

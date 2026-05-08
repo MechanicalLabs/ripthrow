@@ -16,3 +16,9 @@ install-hooks.sh
 # Source control
 .gitignore
 .npmignore
+
+# Tests
+**.test.ts
+
+# Examples
+examples/
