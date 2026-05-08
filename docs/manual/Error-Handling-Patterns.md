@@ -117,3 +117,87 @@ const result = ResultBuilder.safe(() => JSON.parse(raw))
   .map((data: any) => ({ id: data.id, name: data.name }))
   .unwrapOr({ id: "", name: "fallback" });
 ```
+
+## Custom Typed Errors with `createError`
+
+Define errors with typed args and interpolated messages:
+
+```typescript
+import { createError, matchErr, type ErrFactory } from "ripthrow";
+
+const NotFound = createError(
+  "NotFound",
+  (id: string) => `User "${id}" not found`,
+  (id: string) => `Check user ID "${id}"`,
+);
+
+const AuthError = createError(
+  "AuthError",
+  (role: string, resource: string) =>
+    `Role "${role}" cannot access "${resource}"`,
+);
+
+function getUser(id: string) {
+  if (!id) return Err(NotFound(id));
+  return Ok({ name: "Alice" });
+}
+```
+
+Match exhaustively with the builder — the handler receives the typed error with `.args`:
+
+```typescript
+matchErr(getUser(id))
+  .on(NotFound, (e) => `Missing: ${e.args[0]}`)
+  .on(AuthError, (e) => `Auth failed for ${e.args[0]} on ${e.args[1]}`)
+  .otherwise((e) => `Unknown error: ${e.message}`);
+```
+
+## Grouping Errors with `createErrors`
+
+Define all your app errors in one place, like `thiserror`:
+
+```typescript
+const Errors = createErrors({
+  NotFound: { message: (id: string) => `User "${id}" not found` },
+  DbError:  { message: (code: number) => `Database error ${code}` },
+});
+
+type AppError = typeof Errors._type;
+```
+
+Each factory carries typed args and a `kind` discriminant — `Errors.NotFound(id)` creates `TypedError<[string], "NotFound">` with `.kind === "NotFound"`, usable in discriminated unions.
+
+## Wrapping Library Errors
+
+Use `wrapError` to match external Error classes:
+
+```typescript
+import { wrapError } from "ripthrow";
+import { PrismaClientKnownRequestError } from "@prisma/client";
+
+const PrismaErr = wrapError(PrismaClientKnownRequestError);
+
+function handleDb(result: Result<User, Error>) {
+  return matchErr(result)
+    .on(PrismaErr, (e) => `DB error ${e.code}: ${e.message}`)
+    .otherwise((e) => `Generic: ${e.message}`);
+}
+```
+
+The handler receives the full class instance with all its typed properties intact.
+
+## Exhaustive Error Handling with `.exhaustive()`
+
+When you have handled all possible error variants, use `.exhaustive()` instead of `.otherwise()`. **At compile time**, TypeScript checks that every `kind` in the error union has a matching `.on()` handler. If a variant is missing, `.exhaustive()` returns an incompatible type and your code won't compile:
+
+```typescript
+type AppError = typeof NotFound | typeof AuthError | typeof DbError;
+
+matchErr(result)
+  .on(NotFound, (e) => handleMissing(e))
+  .on(AuthError, (e) => handleAuth(e))
+  .on(DbError, (e) => handleDb(e))
+  .exhaustive(); // ✅ compiles — all variants handled
+```
+
+If you skip a variant, the call produces a type error at the call site.

@@ -154,3 +154,72 @@ const result = await buildAsync(safeAsync(fetch("/api/user")))
 ```
 
 The `andThen` and `orElse` callbacks in `AsyncResultBuilder` accept both sync `Result` and async `Promise<Result>`.
+
+## 5. Custom Errors with `createError` and `matchErr`
+
+Define type-safe errors with automatic message interpolation:
+
+```typescript
+import { createError, matchErr, type ErrFactory } from "ripthrow";
+
+const NotFound = createError(
+  "NotFound",
+  (id: string) => `User "${id}" not found`,
+  (id: string) => `Double-check user ID "${id}"`,
+);
+
+const DbError = createError(
+  "DbError",
+  (code: number) => `Database error ${code}`,
+);
+```
+
+Use them in your Result-returning functions:
+
+```typescript
+function getUser(id: string) {
+  if (!id) return Err(NotFound(id));
+  return Ok({ name: "Alice" });
+}
+```
+
+Use `.exhaustive()` when all variants are handled — TypeScript checks at compile time that no `kind` is missing:
+
+```typescript
+const message = matchErr(getUser("123"))
+  .on(NotFound, (e) => `Missing user ${e.args[0]}`)
+  .on(DbError,  (e) => `DB error code ${e.args[0]}`)
+  .exhaustive(); // ✅ TypeScript rejects if a variant is unhandled
+```
+
+Every `TypedError` carries a `kind` field with the error name as a literal type, letting TypeScript narrow discriminated unions.
+
+### Grouping errors with `createErrors`
+
+Define all your app errors in one place, like `thiserror`:
+
+```typescript
+const Errors = createErrors({
+  NotFound: { message: (id: string) => `User "${id}" not found` },
+  DbError:  { message: (code: number) => `Database error ${code}` },
+});
+
+type AppError = typeof Errors._type;
+```
+
+Use `Errors.NotFound(id)` directly — fully typed, with `.kind` as discriminant.
+
+### Wrapping external errors with `wrapError`
+
+Match errors from third-party libraries:
+
+```typescript
+import { wrapError } from "ripthrow";
+import { PrismaClientKnownRequestError } from "@prisma/client";
+
+const PrismaErr = wrapError(PrismaClientKnownRequestError);
+
+matchErr(result)
+  .on(PrismaErr, (e) => `Prisma error ${e.code}`)
+  .otherwise((e) => `Other: ${e.message}`);
+```

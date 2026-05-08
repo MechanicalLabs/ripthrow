@@ -4,7 +4,7 @@
 
 - **[[Getting Started|Getting-Started]]**: Installation, `Ok`/`Err`, `safe`, `bail`, fluent and async builders.
 - **[[Functional Operators|Functional-Operators]]**: `map`, `mapErr`, `andThen`, `orElse`, `tap`, `tapErr`, `context`.
-- **[[Error Handling Patterns|Error-Handling-Patterns]]**: `all`, `any`, `Report`, `context`, `ResultBuilder`, `AsyncResultBuilder`.
+- **[[Error Handling Patterns|Error-Handling-Patterns]]**: `all`, `any`, `Report`, `context`, `ResultBuilder`, `AsyncResultBuilder`, `createError`, `wrapError`, `matchErr`.
 - **[[API Reference|API-Reference]]**: Auto-generated documentation from JSDoc.
 
 ## Why use Result instead of Throw?
