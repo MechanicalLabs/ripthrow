@@ -30,6 +30,7 @@ export function context<T, E>(
     }
     const merged = { ...(originalMeta || {}), ...(meta || {}) };
     const keys = Object.keys(merged);
+    // biome-ignore lint/nursery/noTernary: it's more readable
     const ctx: Record<string, unknown> | undefined = keys.length > 0 ? merged : undefined;
     return Report.from(err, message, {
       help,
