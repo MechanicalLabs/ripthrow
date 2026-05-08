@@ -118,3 +118,20 @@ const result = ResultBuilder.safe(() => JSON.parse('{"a":1}'))
   .andThen((data: any) => ResultBuilder.ok(data.a))
   .unwrapOr(0);
 ```
+
+## Pipe
+
+Compose operations with `pipe` — a functional alternative to the builder:
+
+```typescript
+import { safe, pipe, map, unwrapOr } from "ripthrow";
+
+const result = await pipe(
+  safe(() => JSON.parse('{"a":1}')),
+  (r) => map(r, (data: any) => data.a),
+  (r) => unwrapOr(r, 0),
+);
+```
+
+Accepts both sync values and Promises:
+```

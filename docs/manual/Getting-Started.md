@@ -166,6 +166,22 @@ const result = await buildAsync(safeAsync(fetch("/api/user")))
 
 The `andThen` and `orElse` callbacks in `AsyncResultBuilder` accept both sync `Result` and async `Promise<Result>`.
 
+### Pipe
+
+For a functional style, use `pipe` — it composes transforms without the builder:
+
+```typescript
+import { safe, pipe, map, unwrapOr } from "ripthrow";
+
+const value = await pipe(
+  safe(() => JSON.parse('{"a":1}')),
+  (r) => map(r, (data: any) => data.a),
+  (r) => unwrapOr(r, 0),
+); // 1
+```
+
+Pipe accepts both sync values and Promises — awaits automatically.
+
 ## 5. Custom Errors with `createError` and `matchErr`
 
 Define type-safe errors with automatic message interpolation:
