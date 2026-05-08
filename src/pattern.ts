@@ -9,6 +9,7 @@ interface TypedError<A extends unknown[], N extends string> extends Error {
   readonly help?: string;
   readonly name: N;
   readonly kind: N;
+  readonly _metadata?: Record<string, unknown>;
 }
 
 interface HandlerEntry {
@@ -25,6 +26,7 @@ interface ErrDefEntry {
   message: (...args: any[]) => string;
   // biome-ignore lint/suspicious/noExplicitAny: required for Parameters<>
   help?: (...args: any[]) => string;
+  _metadata?: Record<string, unknown>;
 }
 
 type ErrDefMap = Record<string, ErrDefEntry>;
@@ -44,7 +46,7 @@ type ErrorFactories<T extends ErrDefMap> = {
 export function createErrors<T extends ErrDefMap>(defs: T): ErrorFactories<T> {
   const result: Record<string, ErrFactory<unknown[], string>> = {};
   for (const [name, def] of Object.entries(defs)) {
-    result[name] = createError(name, def.message, def.help);
+    result[name] = createError(name, def.message, def.help, def._metadata);
   }
   return result as unknown as ErrorFactories<T>;
 }
@@ -53,17 +55,20 @@ export function createError<A extends unknown[], N extends string>(
   name: N,
   message: (...args: A) => string,
   help?: (...args: A) => string,
+  _metadata?: Record<string, unknown>,
 ): ErrFactory<A, N> {
   class _Error extends Error {
     override readonly name: N;
     readonly args: A;
     readonly help: string | undefined;
     readonly kind: N = name;
+    readonly _metadata: Record<string, unknown> | undefined;
 
     constructor(...args: A) {
       super(message(...args));
       this.name = name;
       this.args = args;
+      this._metadata = _metadata;
       if (help) {
         this.help = help(...args);
       }

@@ -38,6 +38,13 @@ const wrapped = context(res, "Failed to parse config", "Check your JSON syntax")
 // Result<unknown, Report> — error is now a Report with .message, .help, .cause
 ```
 
+Optionally attach metadata (merged with any `_metadata` from the original error):
+
+```typescript
+const wrapped = context(res, "Request failed", undefined, { status: 502 });
+// Report.context → { status: 502 }
+```
+
 ## Chaining
 
 ### andThen (flatMap)

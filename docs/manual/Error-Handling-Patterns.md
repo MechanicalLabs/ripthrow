@@ -71,6 +71,25 @@ const result = context(
 );
 ```
 
+You can also pass metadata — merged with any `_metadata` from the original error:
+
+```typescript
+const result = context(
+  safe(() => JSON.parse(raw)),
+  "Failed to parse config",
+  "Check your JSON syntax",
+  { status: 400 },
+);
+// Report.context → { status: 400 }
+```
+
+Or via the builder API:
+
+```typescript
+build(safe(() => JSON.parse(raw)))
+  .context("Failed to parse config", "Check your JSON syntax", { status: 400 });
+```
+
 ## Fluent Chaining with `ResultBuilder`
 
 Chain operations with the builder API for more readable code:
@@ -166,6 +185,20 @@ type AppError = typeof Errors._type;
 ```
 
 Each factory carries typed args and a `kind` discriminant — `Errors.NotFound(id)` creates `TypedError<[string], "NotFound">` with `.kind === "NotFound"`, usable in discriminated unions.
+
+Each error can carry optional `_metadata`:
+
+```typescript
+const Errors = createErrors({
+  NotFound: {
+    message: (id: string) => `User "${id}" not found`,
+    help: () => "Verify the user ID",
+    _metadata: { status: 404 },
+  },
+});
+```
+
+When enriched via `.context()`, the `_metadata` is merged into the `Report.context`. Use `kindOf()` to extract the `.kind` from any ripthrow error (traverses `.cause` for `Report`).
 
 ## Wrapping Library Errors
 

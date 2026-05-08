@@ -119,8 +119,12 @@ export class AsyncResultBuilder<T, E> {
     return new AsyncResultBuilder(this._promise.then((r) => tapErr(r, fn)));
   }
 
-  context(message: string, help?: string): AsyncResultBuilder<T, Report> {
-    return new AsyncResultBuilder(this._promise.then((r) => contextOp(r, message, help)));
+  context(
+    message: string,
+    help?: string,
+    meta?: Record<string, unknown>,
+  ): AsyncResultBuilder<T, Report> {
+    return new AsyncResultBuilder(this._promise.then((r) => contextOp(r, message, help, meta)));
   }
 
   match<R>(handlers: { ok: (value: T) => R; err: (error: E) => R }): Promise<R> {

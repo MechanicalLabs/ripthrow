@@ -175,8 +175,12 @@ export class ResultBuilder<T, E> {
   /**
    * Attaches context to the error if it exists.
    */
-  context(message: string, help?: string): ResultBuilder<T, Report> {
-    return new ResultBuilder(contextOp(this._result, message, help));
+  context(
+    message: string,
+    help?: string,
+    meta?: Record<string, unknown>,
+  ): ResultBuilder<T, Report> {
+    return new ResultBuilder(contextOp(this._result, message, help, meta));
   }
 }
 

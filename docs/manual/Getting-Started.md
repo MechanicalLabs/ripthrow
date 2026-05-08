@@ -130,6 +130,15 @@ const result = ResultBuilder.safe(() => JSON.parse(input))
   .unwrapOr({});
 ```
 
+Optionally attach metadata (merged with any `_metadata` from the original error):
+
+```typescript
+const result = ResultBuilder.safe(() => fetch("/api/user"))
+  .context("Request failed", "Check your network", { status: 502 })
+  .unwrapOr(null);
+// Report.context → { status: 502 }
+```
+
 ## 4. Async Chaining with `AsyncResultBuilder`
 
 For async operations, use `AsyncResultBuilder`:
@@ -211,6 +220,20 @@ type AppError = typeof Errors._type;
 
 Use `Errors.NotFound(id)` directly — fully typed, with `.kind` as discriminant.
 
+Each error can carry optional `_metadata` (e.g. an HTTP status code):
+
+```typescript
+const Errors = createErrors({
+  NotFound: {
+    message: (id: string) => `User "${id}" not found`,
+    help: () => "Verify the user ID",
+    _metadata: { status: 404 },
+  },
+});
+```
+
+When enriched via `.context()`, the `_metadata` is merged into the resulting `Report.context`.
+
 ### Wrapping external errors with `wrapError`
 
 Match errors from third-party libraries:
@@ -224,4 +247,22 @@ const PrismaErr = wrapError(PrismaClientKnownRequestError);
 matchErr(result)
   .on(PrismaErr, (e) => `Prisma error ${e.code}`)
   .otherwise((e) => `Other: ${e.message}`);
+```
+
+## 6. Extracting Error Kind at Runtime
+
+Use `kindOf` to extract the `.kind` discriminant from any ripthrow error, including `Report` (traverses `.cause`):
+
+```typescript
+import { kindOf } from "ripthrow";
+
+app.use((err, _req, res, _next) => {
+  const kind = kindOf(err);
+  if (!kind) {
+    // Unknown error — don't leak details
+    return res.status(500).json({ error: "Internal server error" });
+  }
+  res.status(400).json({ error: { kind, message: err.message } });
+});
+```
 ```

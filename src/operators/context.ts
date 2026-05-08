@@ -10,6 +10,7 @@ import { mapErr } from "./map-err";
  * @param result The Result to attach context to.
  * @param message The context message.
  * @param help An optional help message.
+ * @param meta Optional metadata to attach (merged with any _metadata from the original error).
  * @returns A Result with the same success value or a Report as the error.
  *
  * @category Operators
@@ -20,6 +21,19 @@ export function context<T, E>(
   result: Result<T, E>,
   message: string,
   help?: string,
+  meta?: Record<string, unknown>,
 ): Result<T, Report> {
-  return mapErr(result, (err) => Report.from(err, message, { help }));
+  return mapErr(result, (err) => {
+    let originalMeta: Record<string, unknown> | undefined;
+    if (err && typeof err === "object") {
+      originalMeta = (err as { _metadata?: Record<string, unknown> })._metadata;
+    }
+    const merged = { ...(originalMeta || {}), ...(meta || {}) };
+    const keys = Object.keys(merged);
+    const ctx: Record<string, unknown> | undefined = keys.length > 0 ? merged : undefined;
+    return Report.from(err, message, {
+      help,
+      context: ctx,
+    });
+  });
 }
