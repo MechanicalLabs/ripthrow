@@ -11,6 +11,7 @@
 export * from "./consumers";
 export * from "./factories";
 export * from "./operators";
+export * from "./pattern";
 export * from "./report";
 export * from "./result-builder";
 export * from "./result-builder-async";
