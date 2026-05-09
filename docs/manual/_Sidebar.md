@@ -9,3 +9,4 @@
 ### Resources
 
 - [GitHub Repository](https://github.com/MechanicalLabs/ripthrow)
+- [NPM Package](https://www.npmjs.com/package/ripthrow)
