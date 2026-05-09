@@ -178,6 +178,6 @@ Higher ops/s = faster. Latency is per-operation (lower is better).
 - **`matchErr` "miss" path = 15M ops/s**, "hit" path = Error construction speed.
 - **Cost center is always `new Error()`**, not ripthrow.
 
-> "Zero overhead" is not marketing — it's measured. ripthrow compiles down to
-> object literal checks and function calls with no hidden allocation or
-> prototype magic.
+## Licence
+
+This project is licensed under **MIT** License.
