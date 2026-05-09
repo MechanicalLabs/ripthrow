@@ -1,5 +1,10 @@
 # ripthrow
 
+[![npm version](https://img.shields.io/npm/v/ripthrow.svg?style=flat-square)](https://www.npmjs.com/package/ripthrow)
+[![CI status](https://img.shields.io/github/actions/workflow/status/MechanicalLabs/ripthrow/ci.yml?branch=main&style=flat-square)](https://github.com/MechanicalLabs/ripthrow/actions/workflows/ci.yml)
+![Bundle Size](https://img.shields.io/badge/bundle_size-~5.8_KB-blue?style=flat-square)
+[![License](https://img.shields.io/github/license/MechanicalLabs/ripthrow?style=flat-square)](https://github.com/MechanicalLabs/ripthrow/blob/main/LICENSE)
+
 **Zero-dependency, type-safe error handling for TypeScript.**
 
 `ripthrow` is a lightweight library inspired by Rust's `Result` type and the proposed ECMAScript `?=` operator. It allows you to handle success and failure in a structured way, avoiding `try/catch` blocks and making error states explicit in your types.
