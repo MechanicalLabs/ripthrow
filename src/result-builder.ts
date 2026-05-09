@@ -30,9 +30,13 @@ export class ResultBuilder<T, E> {
 
   /**
    * Constructs a successful Result wrapped in a ResultBuilder.
+   *
+   * @template U The type of the success value.
+   * @template F The type of the error value.
+   * @param args The value to wrap. Required if U is not void.
    */
-  static ok<U = void, F = unknown>(value?: U): ResultBuilder<U, F> {
-    return new ResultBuilder({ ok: true, value: value as U });
+  static ok<U = void, F = unknown>(...args: undefined extends U ? [U?] : [U]): ResultBuilder<U, F> {
+    return new ResultBuilder({ ok: true, value: args[0] as U });
   }
 
   /**
@@ -47,7 +51,7 @@ export class ResultBuilder<T, E> {
    */
   static safe<U, F = Error>(fn: () => U): ResultBuilder<U, F> {
     try {
-      return ResultBuilder.ok(fn());
+      return ResultBuilder.ok<U, F>(fn());
     } catch (e) {
       return ResultBuilder.err(e as F);
     }
@@ -55,16 +59,25 @@ export class ResultBuilder<T, E> {
 
   /**
    * Combines multiple Results into a single ResultBuilder.
+   * Preserves exact types and positions of the input results.
    */
-  static all<U, F>(results: Result<U, F>[]): ResultBuilder<U[], F> {
-    const values: U[] = [];
+  static all<V extends readonly Result<unknown, unknown>[]>(
+    results: [...V],
+  ): ResultBuilder<
+    { [K in keyof V]: V[K] extends Result<infer Val, unknown> ? Val : never },
+    V[number] extends Result<unknown, infer ErrV> ? ErrV : never
+  > {
+    // biome-ignore lint/suspicious/noExplicitAny: internal storage requires any
+    const values: any[] = [];
     for (const res of results) {
       if (!res.ok) {
-        return ResultBuilder.err(res.error);
+        // biome-ignore lint/suspicious/noExplicitAny: complex tuple cast
+        return ResultBuilder.err(res.error) as any;
       }
       values.push(res.value);
     }
-    return ResultBuilder.ok(values);
+    // biome-ignore lint/suspicious/noExplicitAny: complex tuple cast
+    return ResultBuilder.ok(values) as any;
   }
 
   /**

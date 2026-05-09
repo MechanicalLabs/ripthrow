@@ -19,7 +19,7 @@ import { Ok } from "./ok";
  */
 export function safe<T, E = Error>(fn: () => T): Result<T, E> {
   try {
-    return Ok(fn());
+    return Ok<T, E>(fn());
   } catch (e) {
     return Err(e as E);
   }

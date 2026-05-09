@@ -4,12 +4,13 @@ import type { Result } from "./types/result";
 const $class = Symbol("error-class");
 const noMatch = Symbol("no-match");
 
-interface TypedError<A extends unknown[], N extends string> extends Error {
+interface TypedError<A extends unknown[], N extends string, M = Record<string, unknown>>
+  extends Error {
   readonly args: A;
   readonly help?: string;
   readonly name: N;
   readonly kind: N;
-  readonly _metadata?: Record<string, unknown>;
+  readonly _metadata?: M;
 }
 
 interface HandlerEntry {
@@ -32,37 +33,61 @@ interface ErrDefEntry {
 type ErrDefMap = Record<string, ErrDefEntry>;
 
 declare const exhaustiveCheck: unique symbol;
-type TypedKinds<E> = E extends TypedError<unknown[], infer K> ? K : never;
+// biome-ignore lint/suspicious/noExplicitAny: needed to match any metadata type
+type TypedKinds<E> = E extends TypedError<unknown[], infer K, any> ? K : never;
 type AllTypedKindsHandled<E, Handled extends string> = TypedKinds<E> extends Handled ? true : false;
 
 type ErrorFactories<T extends ErrDefMap> = {
-  [K in keyof T & string]: ErrFactory<Parameters<T[K]["message"]>, K>;
+  [K in keyof T & string]: ErrFactory<
+    Parameters<T[K]["message"]>,
+    K,
+    T[K] extends { _metadata: infer M } ? M : Record<string, unknown>
+  >;
 } & {
   readonly _type: {
-    [K in keyof T & string]: TypedError<Parameters<T[K]["message"]>, K>;
+    [K in keyof T & string]: TypedError<
+      Parameters<T[K]["message"]>,
+      K,
+      T[K] extends { _metadata: infer M } ? M : Record<string, unknown>
+    >;
   }[keyof T & string];
 };
 
+/**
+ * Creates a collection of error factories from a definition map.
+ *
+ * @template T The error definition map.
+ * @param defs The definitions for each error kind.
+ * @returns An object containing error factories and a combined _type.
+ */
 export function createErrors<T extends ErrDefMap>(defs: T): ErrorFactories<T> {
-  const result: Record<string, ErrFactory<unknown[], string>> = {};
+  // biome-ignore lint/suspicious/noExplicitAny: internal storage of factories
+  const result: Record<string, ErrFactory<unknown[], string, any>> = {};
   for (const [name, def] of Object.entries(defs)) {
     result[name] = createError(name, def.message, def.help, def._metadata);
   }
   return result as unknown as ErrorFactories<T>;
 }
 
-export function createError<A extends unknown[], N extends string>(
+/**
+ * Creates a single typed error factory.
+ *
+ * @template A The type of the arguments.
+ * @template N The literal type of the error name.
+ * @template M The type of the metadata.
+ */
+export function createError<A extends unknown[], N extends string, M = Record<string, unknown>>(
   name: N,
   message: (...args: A) => string,
   help?: (...args: A) => string,
-  _metadata?: Record<string, unknown>,
-): ErrFactory<A, N> {
+  _metadata?: M,
+): ErrFactory<A, N, M> {
   class _Error extends Error {
     override readonly name: N;
     readonly args: A;
     readonly help: string | undefined;
     readonly kind: N = name;
-    readonly _metadata: Record<string, unknown> | undefined;
+    readonly _metadata: M | undefined;
 
     constructor(...args: A) {
       super(message(...args));
@@ -76,10 +101,10 @@ export function createError<A extends unknown[], N extends string>(
   }
   Object.defineProperty(_Error, "name", { value: name });
 
-  const factory = (...args: A): TypedError<A, N> =>
-    new _Error(...args) as unknown as TypedError<A, N>;
+  const factory = (...args: A): TypedError<A, N, M> =>
+    new _Error(...args) as unknown as TypedError<A, N, M>;
   Object.defineProperty(factory, $class, { value: _Error });
-  return factory as unknown as ErrFactory<A, N>;
+  return factory as unknown as ErrFactory<A, N, M>;
 }
 
 export function wrapError<C extends new (...args: never[]) => Error>(
@@ -90,6 +115,9 @@ export function wrapError<C extends new (...args: never[]) => Error>(
   return factory as unknown as ExternalErrFactory<C>;
 }
 
+/**
+ * Builder for pattern matching on results and errors.
+ */
 export class MatchErrBuilder<T, E, R, Handled extends string = never> {
   private readonly result: Result<T, E>;
   private readonly handlers: HandlerEntry[] = [];
@@ -98,11 +126,17 @@ export class MatchErrBuilder<T, E, R, Handled extends string = never> {
     this.result = result;
   }
 
-  on<A extends unknown[], N extends string, HandlerResult>(
-    def: ErrFactory<A, N>,
-    handler: (err: TypedError<A, N>) => HandlerResult,
+  /**
+   * Handles a specific error kind.
+   */
+  on<A extends unknown[], N extends string, M, HandlerResult>(
+    def: ErrFactory<A, N, M>,
+    handler: (err: TypedError<A, N, M>) => HandlerResult,
   ): MatchErrBuilder<T, E, R | HandlerResult, Handled | N>;
 
+  /**
+   * Handles an external error class.
+   */
   on<C extends new (...args: never[]) => Error, HandlerResult>(
     def: ExternalErrFactory<C>,
     handler: (err: InstanceType<C>) => HandlerResult,
@@ -121,10 +155,16 @@ export class MatchErrBuilder<T, E, R, Handled extends string = never> {
     return this;
   }
 
+  /**
+   * Finalizes the match with a fallback for unhandled errors.
+   */
   otherwise(fallback: (err: E) => R): T | R {
     return this.execute(fallback);
   }
 
+  /**
+   * Ensures all typed errors from a createErrors set are handled.
+   */
   exhaustive(): AllTypedKindsHandled<E, Handled> extends true
     ? T | R
     : { readonly [exhaustiveCheck]: typeof exhaustiveCheck } {
@@ -152,11 +192,17 @@ export class MatchErrBuilder<T, E, R, Handled extends string = never> {
   }
 }
 
+/**
+ * Starts a fluent match operation on a Result's error.
+ */
 export function matchErr<T, E>(result: Result<T, E>): MatchErrBuilder<T, E, never, never> {
   return new MatchErrBuilder(result);
 }
 
-export interface ErrFactory<A extends unknown[], N extends string> {
-  (...args: A): TypedError<A, N>;
-  readonly [$class]: new (...args: A) => TypedError<A, N>;
+/**
+ * Factory function for creating typed errors.
+ */
+export interface ErrFactory<A extends unknown[], N extends string, M = Record<string, unknown>> {
+  (...args: A): TypedError<A, N, M>;
+  readonly [$class]: new (...args: A) => TypedError<A, N, M>;
 }

@@ -21,7 +21,7 @@ import { Ok } from "./ok";
 export async function safeAsync<T, E = Error>(promise: Promise<T>): Promise<Result<T, E>> {
   try {
     const data = await promise;
-    return Ok(data);
+    return Ok<T, E>(data as T);
   } catch (e) {
     return Err(e as E);
   }

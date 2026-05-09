@@ -21,7 +21,7 @@ import type { Result } from "../types";
  */
 export function map<T, E, R>(result: Result<T, E>, fn: (value: T) => R): Result<R, E> {
   if (result.ok) {
-    return Ok(fn(result.value));
+    return Ok<R, E>(fn(result.value));
   }
 
   return result;

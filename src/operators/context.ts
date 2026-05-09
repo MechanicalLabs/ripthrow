@@ -7,6 +7,7 @@ import { mapErr } from "./map-err";
  *
  * @template T The type of the success value.
  * @template E The type of the error value.
+ * @template C The type of the metadata.
  * @param result The Result to attach context to.
  * @param message The context message.
  * @param help An optional help message.
@@ -17,12 +18,12 @@ import { mapErr } from "./map-err";
  * @example
  * const res = context(safe(() => JSON.parse(data)), "Failed to parse config");
  */
-export function context<T, E>(
+export function context<T, E, C extends Record<string, unknown> = Record<string, unknown>>(
   result: Result<T, E>,
   message: string,
   help?: string,
-  meta?: Record<string, unknown>,
-): Result<T, Report> {
+  meta?: C,
+): Result<T, Report<C>> {
   return mapErr(result, (err) => {
     let originalMeta: Record<string, unknown> | undefined;
     if (err && typeof err === "object") {
@@ -31,7 +32,7 @@ export function context<T, E>(
     const merged = { ...(originalMeta || {}), ...(meta || {}) };
     const keys = Object.keys(merged);
     // biome-ignore lint/nursery/noTernary: it's more readable
-    const ctx: Record<string, unknown> | undefined = keys.length > 0 ? merged : undefined;
+    const ctx: C | undefined = keys.length > 0 ? (merged as C) : undefined;
     return Report.from(err, message, {
       help,
       context: ctx,

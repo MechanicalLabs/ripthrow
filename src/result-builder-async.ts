@@ -46,8 +46,17 @@ export class AsyncResultBuilder<T, E> {
     return this._executed;
   }
 
-  static ok<U = void, F = unknown>(value?: U): AsyncResultBuilder<U, F> {
-    return new AsyncResultBuilder(Promise.resolve(Ok(value) as Result<U, F>));
+  /**
+   * Constructs a successful Result wrapped in an AsyncResultBuilder.
+   *
+   * @template U The type of the success value.
+   * @template F The type of the error value.
+   * @param args The value to wrap. Required if U is not void.
+   */
+  static ok<U = void, F = unknown>(
+    ...args: undefined extends U ? [U?] : [U]
+  ): AsyncResultBuilder<U, F> {
+    return new AsyncResultBuilder(Promise.resolve(Ok(...args) as Result<U, F>));
   }
 
   static err<U, F>(error: F): AsyncResultBuilder<U, F> {
@@ -58,10 +67,20 @@ export class AsyncResultBuilder<T, E> {
     return new AsyncResultBuilder(safeAsync(promise) as AsyncResult<U, F>);
   }
 
-  static all<U, F>(results: AsyncResult<U, F>[]): AsyncResultBuilder<U[], F> {
+  /**
+   * Combines multiple Results into a single AsyncResultBuilder.
+   * Preserves exact types and positions of the input results.
+   */
+  static all<V extends readonly AsyncResult<unknown, unknown>[]>(
+    results: [...V],
+  ): AsyncResultBuilder<
+    { [K in keyof V]: V[K] extends AsyncResult<infer Val, unknown> ? Val : never },
+    V[number] extends AsyncResult<unknown, infer ErrV> ? ErrV : never
+  > {
     return new AsyncResultBuilder(
       Promise.all(results).then((resolved) => {
-        const values: U[] = [];
+        // biome-ignore lint/suspicious/noExplicitAny: internal storage requires any
+        const values: any[] = [];
         for (const res of resolved) {
           if (!res.ok) {
             return Err(res.error);
@@ -69,7 +88,8 @@ export class AsyncResultBuilder<T, E> {
           values.push(res.value);
         }
         return Ok(values);
-      }),
+        // biome-ignore lint/suspicious/noExplicitAny: complex tuple cast
+      }) as any,
     );
   }
 
@@ -160,17 +180,22 @@ export class AsyncResultBuilder<T, E> {
     return new AsyncResultBuilder<T, E>(this._promise, [...this._ops, op]);
   }
 
-  context(
+  /**
+   * Attaches context to the error if it exists.
+   *
+   * @template C The type of the metadata.
+   */
+  context<C extends Record<string, unknown>>(
     message: string,
     help?: string,
-    meta?: Record<string, unknown>,
-  ): AsyncResultBuilder<T, Report> {
+    meta?: C,
+  ): AsyncResultBuilder<T, Report<C>> {
     const op: Op = (r: Result<unknown, unknown>) =>
       contextOp(r as Result<T, E>, message, help, meta);
-    return new AsyncResultBuilder<T, Report>(this._promise as unknown as AsyncResult<T, Report>, [
-      ...this._ops,
-      op,
-    ]);
+    return new AsyncResultBuilder<T, Report<C>>(
+      this._promise as unknown as AsyncResult<T, Report<C>>,
+      [...this._ops, op],
+    );
   }
 
   match<R>(handlers: { ok: (value: T) => R; err: (error: E) => R }): Promise<R> {

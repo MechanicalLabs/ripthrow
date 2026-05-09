@@ -2,14 +2,15 @@
  * Options for creating a new Report.
  *
  * @category Error Handling
+ * @template C The type of the context metadata.
  */
-export interface ReportOptions {
+export interface ReportOptions<C extends Record<string, unknown> = Record<string, unknown>> {
   /** The underlying cause of the error. */
   cause?: unknown;
   /** A helpful message for the user on how to resolve the error. */
   help?: string | undefined;
   /** Additional key-value pairs to provide more context. */
-  context?: Record<string, unknown> | undefined;
+  context?: C | undefined;
 }
 
 /**
@@ -17,14 +18,15 @@ export interface ReportOptions {
  * Inspired by Rust's `anyhow` or `eyre`.
  *
  * @category Error Handling
+ * @template C The type of the context metadata.
  */
-export class Report extends Error {
+export class Report<C extends Record<string, unknown> = Record<string, unknown>> extends Error {
   /** A helpful message for the user on how to resolve the error. */
   readonly help?: string | undefined;
   /** Additional key-value pairs to provide more context. */
-  readonly context?: Record<string, unknown> | undefined;
+  readonly context?: C | undefined;
 
-  constructor(message: string, options: ReportOptions = {}) {
+  constructor(message: string, options: ReportOptions<C> = {}) {
     super(message);
     this.name = "Report";
     this.help = options.help;
@@ -43,9 +45,13 @@ export class Report extends Error {
    * @param options Additional options.
    * @returns A Report instance.
    */
-  static from(err: unknown, message?: string, options: ReportOptions = {}): Report {
+  static from<T extends Record<string, unknown> = Record<string, unknown>>(
+    err: unknown,
+    message?: string,
+    options: ReportOptions<T> = {},
+  ): Report<T> {
     if (err instanceof Report && !message && !options.help && !options.context) {
-      return err;
+      return err as Report<T>;
     }
 
     let baseMessage: string;
