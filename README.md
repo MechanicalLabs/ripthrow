@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/ripthrow.svg?style=flat-square)](https://www.npmjs.com/package/ripthrow)
 [![CI status](https://img.shields.io/github/actions/workflow/status/MechanicalLabs/ripthrow/ci.yml?branch=main&style=flat-square)](https://github.com/MechanicalLabs/ripthrow/actions/workflows/ci.yml)
-![Bundle Size](https://img.shields.io/badge/bundle_size-~5.8_KB-blue?style=flat-square)
+![Bundle Size](https://img.shields.io/badge/bundle_size-~5.7_KB-blue?style=flat-square)
 [![License](https://img.shields.io/github/license/MechanicalLabs/ripthrow?style=flat-square)](https://github.com/MechanicalLabs/ripthrow/blob/main/LICENSE)
 
 **Zero-dependency, type-safe error handling for TypeScript.**
