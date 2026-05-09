@@ -9,6 +9,8 @@ on:
 jobs:
   quality-check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -38,7 +40,8 @@ jobs:
       - name: Update Bundle Size Badge
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          RAW_SIZE=$(bun build ./src/index.ts --minify | grep "index.js" | awk '{print $2}')
+          BYTES=$(bun build ./src/index.ts --minify | wc -c)
+          RAW_SIZE=$(echo "scale=2; $BYTES/1024" | bc)
           ROUNDED_SIZE=$(printf "%.1f" $RAW_SIZE)
           SAFE_SIZE="~$ROUNDED_SIZE""_KB"
 
