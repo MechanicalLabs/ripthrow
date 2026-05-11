@@ -108,14 +108,14 @@ const result = build(safe(() => JSON.parse('{"a":1}')))
   .unwrapOr(0);
 ```
 
-Or use `ResultBuilder` static methods directly:
+Or use `ResultBuilder` convenience constructors:
 
 ```typescript
 import { ResultBuilder } from "ripthrow";
 
 const result = ResultBuilder.safe(() => JSON.parse('{"a":1}'))
   .context("Invalid config")
-  .andThen((data: any) => ResultBuilder.ok(data.a))
+  .andThen((data: any) => Ok(data.a))
   .unwrapOr(0);
 ```
 
@@ -133,5 +133,5 @@ const result = await pipe(
 );
 ```
 
-Accepts both sync values and Promises:
+`pipe` accepts both sync values and Promises — it awaits each step automatically so you can freely mix sync and async transforms.
 ```

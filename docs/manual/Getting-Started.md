@@ -110,7 +110,7 @@ const result = build(Ok(1))
   .unwrapOr("0");
 ```
 
-Or use `ResultBuilder` directly with static constructors:
+Or use the handy namespace constructors for a more compact style:
 
 ```typescript
 import { ResultBuilder } from "ripthrow";
@@ -139,24 +139,21 @@ const result = ResultBuilder.safe(() => fetch("/api/user"))
 // Report.context → { status: 502 }
 ```
 
+Combine multiple results easily:
+
+```typescript
+const all = ResultBuilder.all([Ok(1), Ok(2)]).unwrap(); // [1, 2]
+const any = ResultBuilder.any([Err("a"), Ok(1)]).unwrap(); // 1
+```
+
 ## 4. Async Chaining with `AsyncResultBuilder`
 
-For async operations, use `AsyncResultBuilder`:
+For async operations, use `buildAsync()` or `AsyncResultBuilder`:
 
 ```typescript
 import { AsyncResultBuilder } from "ripthrow";
 
 const result = await AsyncResultBuilder.safeAsync(fetch("/api/user"))
-  .map((res) => res.json())
-  .unwrap();
-```
-
-Or use `buildAsync()`:
-
-```typescript
-import { safeAsync, buildAsync } from "ripthrow";
-
-const result = await buildAsync(safeAsync(fetch("/api/user")))
   .andThen(async (res) => {
     const data = await res.json();
     return data.id ? Ok(data) : Err("Missing ID");
@@ -168,7 +165,7 @@ The `andThen` and `orElse` callbacks in `AsyncResultBuilder` accept both sync `R
 
 ### Pipe
 
-For a functional style, use `pipe` — it composes transforms without the builder:
+For a functional style without the builder, use `pipe` to compose transforms:
 
 ```typescript
 import { safe, pipe, map, unwrapOr } from "ripthrow";
@@ -180,7 +177,7 @@ const value = await pipe(
 ); // 1
 ```
 
-Pipe accepts both sync values and Promises — awaits automatically.
+`pipe` accepts both sync values and Promises — it awaits each step automatically, so you can mix sync and async transforms freely.
 
 ## 5. Custom Errors with `createError` and `matchErr`
 

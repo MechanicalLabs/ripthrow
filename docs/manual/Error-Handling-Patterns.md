@@ -103,20 +103,34 @@ const name = ResultBuilder.safe(() => JSON.parse(input))
   .unwrap();
 ```
 
+Or use the `build()` function to start from an existing `Result`:
+
+```typescript
+import { safe, build } from "ripthrow";
+
+const name = build(safe(() => JSON.parse(input)))
+  .context("Invalid JSON", "Check the input format")
+  .map((data: any) => data.user?.name ?? "Anonymous")
+  .unwrap();
+```
+
 ## Async Fluent Chaining with `AsyncResultBuilder`
 
-For async operations, use `AsyncResultBuilder`:
+For async operations, use `AsyncResultBuilder` or `buildAsync()`:
 
 ```typescript
 import { AsyncResultBuilder } from "ripthrow";
 
 const user = await AsyncResultBuilder.safeAsync(fetch("/api/user"))
-  .andThen((res) => AsyncResultBuilder.safeAsync(res.json()))
+  .andThen(async (res) => {
+    const json = await res.json();
+    return Ok(json);
+  })
   .map((data: any) => data.name)
   .unwrapOr("Anonymous");
 ```
 
-The `andThen` and `orElse` methods accept both sync `Result` and async `Promise<Result>`, so you can mix them freely.
+The `andThen` and `orElse` callbacks accept both sync `Result` and async `Promise<Result>`, so you can mix them freely.
 
 ## Advanced Pipeline
 
