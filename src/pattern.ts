@@ -1,7 +1,8 @@
-// biome-ignore lint/nursery/noExcessiveClassesPerFile: _Error is local inside createError
-import type { Result } from "./types/result";
+// biome-ignore-all lint/nursery/useConsistentMethodSignatures: overloaded signatures on MatchErrBuilder interface
+import type { Result } from "./types";
 
 const $class = Symbol("error-class");
+const $errorTag = Symbol("error-tag");
 const noMatch = Symbol("no-match");
 
 interface TypedError<A extends unknown[], N extends string, M = Record<string, unknown>>
@@ -17,6 +18,13 @@ interface HandlerEntry {
   execute: (err: unknown) => unknown;
 }
 
+/**
+ * A callable factory wrapping an external Error class for use with
+ * {@link matchErr}. Created via {@link wrapError}.
+ *
+ * @template C The external Error class type.
+ * @category Error Handling
+ */
 interface ExternalErrFactory<C extends new (...args: never[]) => Error> {
   (...args: ConstructorParameters<C>): InstanceType<C>;
   readonly [$class]: C;
@@ -56,9 +64,32 @@ type ErrorFactories<T extends ErrDefMap> = {
 /**
  * Creates a collection of error factories from a definition map.
  *
- * @template T The error definition map.
- * @param defs The definitions for each error kind.
- * @returns An object containing error factories and a combined _type.
+ * Each key becomes a named {@link ErrFactory} callable with the args inferred
+ * from the `message` function. The returned object also carries a `_type`
+ * discriminant — a union of all defined error types — useful for exhaustive
+ * type narrowing and for annotating `Result<E, AppError>`.
+ *
+ * Inspired by Rust's `thiserror` / `derive(Error)` pattern.
+ *
+ * @param defs An object mapping error names to `{ message, help?, _metadata? }`.
+ * @returns An object with one factory per key and a combined `_type` union.
+ *
+ * @template T The shape of the definition map.
+ *
+ * @category Error Handling
+ * @see createError
+ * @see matchErr
+ * @example
+ * const Errors = createErrors({
+ *   NotFound: { message: (id: string) => `User "${id}" not found` },
+ *   DbError:  { message: (code: number) => `Database error ${code}` },
+ * });
+ *
+ * type AppError = typeof Errors._type;
+ * // AppError = TypedError<[string], "NotFound"> | TypedError<[number], "DbError">
+ *
+ * const err = Errors.NotFound("42");
+ * err.kind // "NotFound"
  */
 export function createErrors<T extends ErrDefMap>(defs: T): ErrorFactories<T> {
   // biome-ignore lint/suspicious/noExplicitAny: internal storage of factories
@@ -72,9 +103,35 @@ export function createErrors<T extends ErrDefMap>(defs: T): ErrorFactories<T> {
 /**
  * Creates a single typed error factory.
  *
- * @template A The type of the arguments.
- * @template N The literal type of the error name.
- * @template M The type of the metadata.
+ * Returns a callable function that produces `TypedError` objects with a
+ * discriminable `.kind` field, optional help text, and arbitrary metadata.
+ * The returned factory also acts as a matcher for {@link matchErr}.
+ *
+ * @param name The literal error name (used as `.kind` and `err.name`).
+ * @param message A message template receiving the same args as the factory.
+ * @param help An optional help template for user-facing guidance.
+ * @param _metadata Optional static metadata attached to every produced error.
+ * @returns An {@link ErrFactory} that creates typed errors and can be passed
+ *          to {@link matchErr} `.on()` for instanceof-style matching.
+ *
+ * @template A The type of the arguments tuple.
+ * @template N The literal string type of the error name.
+ * @template M The type of the static metadata.
+ *
+ * @category Error Handling
+ * @see createErrors
+ * @see matchErr
+ * @example
+ * const NotFound = createError(
+ *   "NotFound",
+ *   (id: string) => `User "${id}" not found`,
+ *   (id: string) => `Check user ID "${id}"`,
+ * );
+ *
+ * const err = NotFound("42");
+ * err.kind   // "NotFound"
+ * err.args   // ["42"]
+ * err.help   // "Check user ID \"42\""
  */
 export function createError<A extends unknown[], N extends string, M = Record<string, unknown>>(
   name: N,
@@ -82,31 +139,48 @@ export function createError<A extends unknown[], N extends string, M = Record<st
   help?: (...args: A) => string,
   _metadata?: M,
 ): ErrFactory<A, N, M> {
-  class _Error extends Error {
-    override readonly name: N;
-    readonly args: A;
-    readonly help: string | undefined;
-    readonly kind: N = name;
-    readonly _metadata: M | undefined;
+  const tag = Symbol(name);
 
-    constructor(...args: A) {
-      super(message(...args));
-      this.name = name;
-      this.args = args;
-      this._metadata = _metadata;
-      if (help) {
-        this.help = help(...args);
-      }
+  const factory = (...args: A): TypedError<A, N, M> => {
+    const err = new Error(message(...args));
+    err.name = name;
+    const te = err as unknown as TypedError<A, N, M>;
+    // biome-ignore lint/suspicious/noExplicitAny: readonly properties on TypedError
+    const assign = te as any;
+    assign.args = args;
+    assign.kind = name;
+    assign._metadata = _metadata;
+    Object.defineProperty(te, $errorTag, { value: tag });
+    if (help) {
+      assign.help = help(...args);
     }
-  }
-  Object.defineProperty(_Error, "name", { value: name });
+    return te;
+  };
 
-  const factory = (...args: A): TypedError<A, N, M> =>
-    new _Error(...args) as unknown as TypedError<A, N, M>;
-  Object.defineProperty(factory, $class, { value: _Error });
+  Object.defineProperty(factory, $class, { value: tag });
   return factory as unknown as ErrFactory<A, N, M>;
 }
 
+/**
+ * Wraps an external Error class so it can be matched with {@link matchErr}.
+ *
+ * The returned factory creates instances of the original class, and the
+ * `.on()` handler in `matchErr` uses `instanceof` under the hood, so you get
+ * full access to the original class's typed properties.
+ *
+ * @param cls The external Error class to wrap (e.g. `PrismaClientKnownRequestError`).
+ * @returns An {@link ExternalErrFactory} callable as a constructor and usable
+ *          in {@link matchErr} `.on()`.
+ *
+ * @category Error Handling
+ * @example
+ * import { PrismaClientKnownRequestError } from "@prisma/client";
+ * const PrismaErr = wrapError(PrismaClientKnownRequestError);
+ *
+ * matchErr(result)
+ *   .on(PrismaErr, (e) => `Prisma error ${e.code}`)
+ *   .otherwise((e) => `Other: ${e.message}`);
+ */
 export function wrapError<C extends new (...args: never[]) => Error>(
   cls: C,
 ): ExternalErrFactory<C> {
@@ -116,16 +190,19 @@ export function wrapError<C extends new (...args: never[]) => Error>(
 }
 
 /**
- * Builder for pattern matching on results and errors.
+ * Fluent builder for pattern matching on a Result's error.
+ *
+ * Start with {@link matchErr}, then chain `.on()` calls for each error variant
+ * you want to handle, and finish with `.otherwise()` or `.exhaustive()`.
+ *
+ * @template T The success type of the Result being matched.
+ * @template E The error type of the Result being matched.
+ * @template R The accumulated return type of all `.on()` handlers.
+ * @template Handled The union of error kinds already handled (tracked at type level).
+ *
+ * @category Error Handling
  */
-export class MatchErrBuilder<T, E, R, Handled extends string = never> {
-  private readonly result: Result<T, E>;
-  private readonly handlers: HandlerEntry[] = [];
-
-  constructor(result: Result<T, E>) {
-    this.result = result;
-  }
-
+export interface MatchErrBuilder<T, E, R, Handled extends string = never> {
   /**
    * Handles a specific error kind.
    */
@@ -142,67 +219,103 @@ export class MatchErrBuilder<T, E, R, Handled extends string = never> {
     handler: (err: InstanceType<C>) => HandlerResult,
   ): MatchErrBuilder<T, E, R | HandlerResult, Handled>;
 
-  on(def: unknown, handler: unknown): this {
-    const _class = (def as { readonly [$class]: new (...args: never[]) => Error })[$class];
-    this.handlers.push({
-      execute: (err: unknown) => {
-        if ((err as Error) instanceof _class) {
-          return (handler as (err: unknown) => unknown)(err);
-        }
-        return noMatch;
-      },
-    });
-    return this;
-  }
-
   /**
    * Finalizes the match with a fallback for unhandled errors.
    */
-  otherwise(fallback: (err: E) => R): T | R {
-    return this.execute(fallback);
-  }
+  otherwise: (fallback: (err: E) => R) => T | R;
 
   /**
    * Ensures all typed errors from a createErrors set are handled.
    */
-  exhaustive(): AllTypedKindsHandled<E, Handled> extends true
+  exhaustive: () => AllTypedKindsHandled<E, Handled> extends true
     ? T | R
-    : { readonly [exhaustiveCheck]: typeof exhaustiveCheck } {
-    return this.execute((err) => {
-      throw err;
-    }) as never;
-  }
+    : { readonly [exhaustiveCheck]: typeof exhaustiveCheck };
+}
 
-  private execute(fallback: (err: E) => R): T | R {
-    if (this.result.ok) {
-      return this.result.value;
+/**
+ * Starts a fluent pattern match on a Result's error.
+ *
+ * Chain `.on()` calls for each error variant you want to handle, then finish
+ * with `.otherwise(fallback)` for a catch-all or `.exhaustive()` when every
+ * possible typed error kind has a handler.
+ *
+ * When the Result is `Ok`, the match short-circuits and returns the success
+ * value directly — no handler is invoked.
+ *
+ * @param result The Result whose error to match against.
+ * @returns A {@link MatchErrBuilder} to chain `.on()` calls.
+ *
+ * @category Error Handling
+ * @example
+ * matchErr(getUser("123"))
+ *   .on(NotFound, (e) => `Missing user ${e.args[0]}`)
+ *   .on(DbError,  (e) => `DB error code ${e.args[0]}`)
+ *   .exhaustive();
+ */
+export function matchErr<T, E>(result: Result<T, E>): MatchErrBuilder<T, E, never, never> {
+  const handlers: HandlerEntry[] = [];
+
+  // biome-ignore lint/suspicious/noExplicitAny: internal generic handling
+  const execute = (fallback: (err: E) => any): any => {
+    if (result.ok) {
+      return result.value;
     }
 
     // biome-ignore lint/nursery/useDestructuring: discriminated union prevents destructuring
-    const error = this.result.error;
+    const error = result.error;
 
-    for (const entry of this.handlers) {
-      const result = entry.execute(error);
-      if (result !== noMatch) {
-        return result as R;
+    for (const entry of handlers) {
+      const r = entry.execute(error);
+      if (r !== noMatch) {
+        return r;
       }
     }
 
     return fallback(error);
-  }
+  };
+
+  // biome-ignore lint/suspicious/noExplicitAny: internal builder with complex generics
+  const builder: any = {
+    on: (def: unknown, handler: unknown) => {
+      const tagOrClass = (def as { readonly [$class]: unknown })[$class];
+      handlers.push({
+        execute: (err: unknown) => {
+          if (typeof tagOrClass === "function") {
+            if ((err as Error) instanceof (tagOrClass as new (...args: never[]) => Error)) {
+              return (handler as (err: unknown) => unknown)(err);
+            }
+          } else if ((err as Record<symbol, unknown>)?.[$errorTag] === tagOrClass) {
+            return (handler as (err: unknown) => unknown)(err);
+          }
+          return noMatch;
+        },
+      });
+      return builder;
+    },
+    // biome-ignore lint/suspicious/noExplicitAny: internal generic executor
+    otherwise: (fallback: (err: E) => any) => execute(fallback),
+    exhaustive: () =>
+      execute((err: E) => {
+        throw err;
+      }) as never,
+  };
+
+  return builder as MatchErrBuilder<T, E, never, never>;
 }
 
 /**
- * Starts a fluent match operation on a Result's error.
- */
-export function matchErr<T, E>(result: Result<T, E>): MatchErrBuilder<T, E, never, never> {
-  return new MatchErrBuilder(result);
-}
-
-/**
- * Factory function for creating typed errors.
+ * A callable factory that creates typed errors and can participate in
+ * {@link matchErr} pattern matching.
+ *
+ * Create one via {@link createError} or `createErrors()[key]`.
+ *
+ * @template A The type of the arguments tuple passed to the factory.
+ * @template N The literal string type of the error name (`.kind` / `.name`).
+ * @template M The type of the static metadata attached to each error.
+ *
+ * @category Error Handling
  */
 export interface ErrFactory<A extends unknown[], N extends string, M = Record<string, unknown>> {
   (...args: A): TypedError<A, N, M>;
-  readonly [$class]: new (...args: A) => TypedError<A, N, M>;
+  readonly [$class]: symbol;
 }
