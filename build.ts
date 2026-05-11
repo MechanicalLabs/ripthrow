@@ -13,7 +13,6 @@ const result = await Bun.build({
   target: "browser",
   format: "esm",
   minify: {
-    identifiers: true,
     syntax: true,
     whitespace: true,
   },
