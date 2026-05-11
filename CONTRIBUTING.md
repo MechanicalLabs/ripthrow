@@ -39,7 +39,15 @@ To automatically fix formatting issues:
 bun run format
 ```
 
-### 2. Testing
+### 2. Build
+
+Before publishing, verify the build succeeds (JS bundle + type declarations):
+
+```bash
+bun run build
+```
+
+### 3. Testing
 
 All features and bug fixes must include tests. We use Bun's built-in test runner:
 
@@ -47,7 +55,7 @@ All features and bug fixes must include tests. We use Bun's built-in test runner
 bun test
 ```
 
-### 3. Dependency Check
+### 4. Dependency Check
 
 We use [Knip](https://knip.dev) to ensure no unused files or dependencies are added:
 
@@ -55,14 +63,14 @@ We use [Knip](https://knip.dev) to ensure no unused files or dependencies are ad
 bun run knip
 ```
 
-### 4. Documentation
+### 5. Documentation
 
 If you add a new feature, please:
 - Add JSDoc comments with examples.
 - Update the manual in `docs/manual/` if necessary.
 - API documentation is automatically generated from JSDoc using `bun run docs`.
 
-### 5. Examples
+### 6. Examples
 
 The `examples/` directory contains usage patterns. If you introduce a significant change, please update or add a new example to ensure they remain functional.
 

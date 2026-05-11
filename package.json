@@ -1,7 +1,7 @@
 {
   "name": "ripthrow",
   "module": "src/index.ts",
-  "version": "2.2.0",
+  "version": "3.0.0",
   "description": "Zero-overhead, type-safe error handling for TypeScript.",
   "keywords": [
     "result",
@@ -17,16 +17,41 @@
     "url": "git+https://github.com/MechanicalLabs/ripthrow.git"
   },
   "sideEffects": false,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./factories": {
+      "import": "./dist/factories/index.js",
+      "types": "./dist/factories/index.d.ts"
+    },
+    "./operators": {
+      "import": "./dist/operators/index.js",
+      "types": "./dist/operators/index.d.ts"
+    },
+    "./consumers": {
+      "import": "./dist/consumers/index.js",
+      "types": "./dist/consumers/index.d.ts"
+    },
+    "./utils": {
+      "import": "./dist/utils/index.js",
+      "types": "./dist/utils/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types/index.js",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
   "files": [
+    "dist",
     "src",
     "!src/**/*.test.ts"
   ],
   "publishConfig": {
     "access": "public"
   },
-  "type": "module",
   "devDependencies": {
     "@biomejs/biome": "2.4.14",
     "@types/bun": "latest",
@@ -40,6 +65,7 @@
     "typescript": "^6.0.3"
   },
   "scripts": {
+    "build": "bun run build.ts",
     "knip": "knip",
     "lint": "biome check .",
     "format": "biome format --write .",
