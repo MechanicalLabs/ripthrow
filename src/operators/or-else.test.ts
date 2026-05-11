@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Err, Ok } from "../factories";
-import { orElse } from "./or-else";
+import { orElse } from ".";
 
 describe("orElse", () => {
   test("should recover from Err", () => {

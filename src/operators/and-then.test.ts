@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Err, Ok } from "../factories";
-import { andThen } from "./and-then";
+import { andThen } from ".";
 
 describe("andThen", () => {
   test("should chain Ok results", () => {

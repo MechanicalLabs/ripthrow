@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { safe } from "./safe";
+import { safe } from ".";
 
 describe("safe", () => {
   test("should return Ok when function succeeds", () => {

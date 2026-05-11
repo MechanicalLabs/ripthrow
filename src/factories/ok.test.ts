@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { Ok } from "./ok";
+import { Ok } from ".";
 
 describe("Ok", () => {
   test("should return a success Result", () => {

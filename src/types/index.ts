@@ -1,1 +1,1 @@
-export type * from "./result";
+export type { AsyncResult, Result } from "./result";

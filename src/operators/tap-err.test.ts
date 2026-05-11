@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Err, Ok } from "../factories";
-import { tapErr } from "./tap-err";
+import { tapErr } from ".";
 
 describe("tapErr", () => {
   test("should execute callback for Err", () => {

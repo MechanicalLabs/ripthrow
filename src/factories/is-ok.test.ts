@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { Err, Ok } from "./index";
-import { isOk } from "./is-ok";
+import { Err, isOk, Ok } from ".";
 
 describe("isOk", () => {
   test("should return true for Ok result", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Err, Ok } from "../factories";
-import { match } from "./match";
+import { match } from ".";
 
 describe("match", () => {
   test("should call ok handler on Ok result", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Err, Ok } from "../factories";
-import { unwrap } from "./unwrap";
+import { unwrap } from ".";
 
 describe("unwrap", () => {
   test("should return value for Ok", () => {

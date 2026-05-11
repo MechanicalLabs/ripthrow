@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Err, Ok } from "../factories";
-import { all } from "./all";
+import { all } from ".";
 
 describe("all", () => {
   test("should combine all Ok results", () => {

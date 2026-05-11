@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { safeAsync } from "./safe-async";
+import { safeAsync } from ".";
 
 describe("safeAsync", () => {
   test("should return Ok when promise resolves", async () => {

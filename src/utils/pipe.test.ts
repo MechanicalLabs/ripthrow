@@ -1,9 +1,8 @@
 /** biome-ignore-all lint/style/noMagicNumbers: test values */
 import { describe, expect, test } from "bun:test";
-import { unwrapOr } from "../consumers/unwrap-or";
+import { unwrapOr } from "../consumers";
 import { Err, Ok } from "../factories";
-import { context } from "../operators/context";
-import { map } from "../operators/map";
+import { context, map } from "../operators";
 import { pipe } from "./pipe";
 
 describe("pipe", () => {

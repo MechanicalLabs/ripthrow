@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Err, Ok } from "../factories";
-import { any } from "./any";
+import { any } from ".";
 
 describe("any", () => {
   test("should return the first Ok found", () => {

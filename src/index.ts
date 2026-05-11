@@ -8,12 +8,14 @@
  * @module ripthrow
  */
 
-export * from "./consumers";
-export * from "./factories";
-export * from "./operators";
-export * from "./pattern";
-export * from "./report";
-export * from "./result-builder";
-export * from "./result-builder-async";
-export type * from "./types";
-export * from "./utils";
+export { match, unwrap, unwrapOr } from "./consumers";
+export { bail, Err, isErr, isOk, Ok, safe, safeAsync } from "./factories";
+export { andThen, context, map, mapErr, orElse, tap, tapErr } from "./operators";
+export type { ErrFactory, MatchErrBuilder } from "./pattern";
+export { createError, createErrors, matchErr, wrapError } from "./pattern";
+export type { Report, ReportOptions } from "./report";
+export { createReport, isReport, reportFrom } from "./report";
+export { build, createResultBuilder, ResultBuilder } from "./result-builder";
+export { AsyncResultBuilder, buildAsync, createAsyncResultBuilder } from "./result-builder-async";
+export type { AsyncResult, Result } from "./types";
+export { all, any, kindOf, pipe } from "./utils";
