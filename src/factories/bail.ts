@@ -1,4 +1,4 @@
-import { Report, type ReportOptions } from "../report";
+import { createReport, type Report, type ReportOptions } from "../report";
 
 /**
  * Creates a new Report instance.
@@ -13,5 +13,5 @@ import { Report, type ReportOptions } from "../report";
  * return Err(bail("Permission denied", { help: "Check your API token" }));
  */
 export function bail(message: string, options?: ReportOptions): Report {
-  return new Report(message, options);
+  return createReport(message, options);
 }

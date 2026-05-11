@@ -1,4 +1,4 @@
-import { Report } from "../report";
+import { type Report, type ReportOptions, reportFrom } from "../report";
 import type { Result } from "../types/result";
 import { mapErr } from "./map-err";
 
@@ -33,9 +33,9 @@ export function context<T, E, C extends Record<string, unknown> = Record<string,
     const keys = Object.keys(merged);
     // biome-ignore lint/nursery/noTernary: it's more readable
     const ctx: C | undefined = keys.length > 0 ? (merged as C) : undefined;
-    return Report.from(err, message, {
+    return reportFrom(err, message, {
       help,
       context: ctx,
-    });
+    } as ReportOptions<C>) as Report<C>;
   });
 }

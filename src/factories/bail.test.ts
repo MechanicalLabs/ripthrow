@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { Report } from "../report";
-import { bail } from "./bail";
+import { isReport } from "../report";
+import { bail } from ".";
 
 describe("bail", () => {
   test("should create a Report", () => {
     const report = bail("error message", { help: "fix it" });
-    expect(report).toBeInstanceOf(Report);
+    expect(isReport(report)).toBe(true);
     expect(report.message).toBe("error message");
     expect(report.help).toBe("fix it");
   });

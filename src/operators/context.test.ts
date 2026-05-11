@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Err, Ok } from "../factories";
-import { context } from "./context";
+import { context } from ".";
 
 describe("context", () => {
   test("should add context to error", () => {
