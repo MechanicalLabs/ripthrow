@@ -1,7 +1,7 @@
 {
   "name": "ripthrow",
-  "module": "src/index.ts",
-  "version": "3.0.0",
+  "module": "./dist/index.js",
+  "version": "3.0.1",
   "description": "Zero-overhead, type-safe error handling for TypeScript.",
   "keywords": [
     "result",
