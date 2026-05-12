@@ -1,3 +1,5 @@
+import { execSync } from "node:child_process";
+
 const entrypoints = [
   "./src/index.ts",
   "./src/factories/index.ts",
@@ -7,21 +9,21 @@ const entrypoints = [
   "./src/types/index.ts",
 ];
 
-const result = await Bun.build({
-  entrypoints,
-  outdir: "./dist",
-  target: "browser",
-  format: "esm",
-  minify: {
-    syntax: true,
-    whitespace: true,
-  },
-  sourcemap: "external",
-});
+console.log("Building JS bundles with esbuild...");
 
-if (!result.success) {
-  console.error("Build failed:", result.logs);
-  process.exit(1);
+for (const entrypoint of entrypoints) {
+  // Determine output path relative to dist
+  const outPath = entrypoint.replace("./src/", "./dist/").replace(".ts", ".js");
+  
+  try {
+    execSync(
+      `bun x esbuild ${entrypoint} --bundle --format=esm --target=esnext --minify --sourcemap --outfile=${outPath}`,
+      { stdio: "inherit" }
+    );
+  } catch (error) {
+    console.error(`Build failed for ${entrypoint}`);
+    process.exit(1);
+  }
 }
 
 console.log("JS bundle build succeeded!");
