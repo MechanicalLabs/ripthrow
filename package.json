@@ -1,7 +1,7 @@
 {
   "name": "ripthrow",
   "module": "./dist/index.js",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Zero-overhead, type-safe error handling for TypeScript.",
   "keywords": [
     "result",
@@ -10,7 +10,7 @@
     "functional",
     "type-safe"
   ],
-  "author": "Sir Cesarium",
+  "author": "Cesar Marcano <contact.cesarmarcano@gmail.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
