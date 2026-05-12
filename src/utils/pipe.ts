@@ -44,8 +44,10 @@ export async function pipe<T, F1, F2, F3, F4, F5>(
 export async function pipe<T, Fns extends any[]>(value: T | Promise<T>, ...fns: Fns): Promise<any> {
   // biome-ignore lint/suspicious/noExplicitAny: internal accumulator requires any
   let acc: any = await value;
+
   for (const fn of fns) {
     acc = await fn(acc);
   }
+
   return acc;
 }

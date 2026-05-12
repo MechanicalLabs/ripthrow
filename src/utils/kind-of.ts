@@ -14,9 +14,11 @@ export function kindOf(err: unknown): string | undefined {
   if (err && typeof err === "object" && "kind" in err) {
     return (err as { kind: string }).kind;
   }
+
   if (err instanceof Error && err.cause && typeof err.cause === "object" && "kind" in err.cause) {
     return (err.cause as { kind: string }).kind;
   }
+
   // biome-ignore lint/complexity/noUselessUndefined: required by noImplicitReturns
   return undefined;
 }

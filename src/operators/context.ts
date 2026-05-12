@@ -26,13 +26,17 @@ export function context<T, E, C extends Record<string, unknown> = Record<string,
 ): Result<T, Report<C>> {
   return mapErr(result, (err) => {
     let originalMeta: Record<string, unknown> | undefined;
+
     if (err && typeof err === "object") {
       originalMeta = (err as { _metadata?: Record<string, unknown> })._metadata;
     }
+
     const merged = { ...(originalMeta || {}), ...(meta || {}) };
     const keys = Object.keys(merged);
+
     // biome-ignore lint/nursery/noTernary: it's more readable
     const ctx: C | undefined = keys.length > 0 ? (merged as C) : undefined;
+
     return reportFrom(err, message, {
       help,
       context: ctx,

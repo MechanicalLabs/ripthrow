@@ -24,13 +24,16 @@ export function all<T extends readonly Result<unknown, unknown>[]>(
 > {
   // biome-ignore lint/suspicious/noExplicitAny: accumulator type evolves
   const values: any[] = [];
+
   for (const res of results) {
     if (!res.ok) {
       // biome-ignore lint/suspicious/noExplicitAny: forced cast for complex tuple inference
       return Err(res.error) as any;
     }
+
     values.push(res.value);
   }
+
   // biome-ignore lint/suspicious/noExplicitAny: forced cast for complex tuple inference
   return Ok(values) as any;
 }

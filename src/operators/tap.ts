@@ -19,5 +19,6 @@ export function tap<T, E>(result: Result<T, E>, fn: (value: T) => void): Result<
   if (result.ok) {
     fn(result.value);
   }
+
   return result;
 }

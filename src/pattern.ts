@@ -94,9 +94,11 @@ type ErrorFactories<T extends ErrDefMap> = {
 export function createErrors<T extends ErrDefMap>(defs: T): ErrorFactories<T> {
   // biome-ignore lint/suspicious/noExplicitAny: internal storage of factories
   const result: Record<string, ErrFactory<unknown[], string, any>> = {};
+
   for (const [name, def] of Object.entries(defs)) {
     result[name] = createError(name, def.message, def.help, def._metadata);
   }
+
   return result as unknown as ErrorFactories<T>;
 }
 
@@ -144,20 +146,27 @@ export function createError<A extends unknown[], N extends string, M = Record<st
   const factory = (...args: A): TypedError<A, N, M> => {
     const err = new Error(message(...args));
     err.name = name;
+
     const te = err as unknown as TypedError<A, N, M>;
+
     // biome-ignore lint/suspicious/noExplicitAny: readonly properties on TypedError
     const assign = te as any;
+
     assign.args = args;
     assign.kind = name;
     assign._metadata = _metadata;
+
     Object.defineProperty(te, $errorTag, { value: tag });
+
     if (help) {
       assign.help = help(...args);
     }
+
     return te;
   };
 
   Object.defineProperty(factory, $class, { value: tag });
+
   return factory as unknown as ErrFactory<A, N, M>;
 }
 
@@ -185,7 +194,9 @@ export function wrapError<C extends new (...args: never[]) => Error>(
   cls: C,
 ): ExternalErrFactory<C> {
   const factory = (...args: ConstructorParameters<C>): Error => new cls(...args);
+
   Object.defineProperty(factory, $class, { value: cls });
+
   return factory as unknown as ExternalErrFactory<C>;
 }
 
@@ -278,6 +289,7 @@ export function matchErr<T, E>(result: Result<T, E>): MatchErrBuilder<T, E, neve
   const builder: any = {
     on: (def: unknown, handler: unknown) => {
       const tagOrClass = (def as { readonly [$class]: unknown })[$class];
+
       handlers.push({
         execute: (err: unknown) => {
           if (typeof tagOrClass === "function") {

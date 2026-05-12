@@ -77,6 +77,7 @@ export function createAsyncResultBuilder<T, E>(
     if (_executed) {
       return _executed;
     }
+
     if (_ops.length === 0) {
       _executed = promise;
     } else {
@@ -88,6 +89,7 @@ export function createAsyncResultBuilder<T, E>(
         return current as Result<T, E>;
       });
     }
+
     return _executed;
   };
 
@@ -103,43 +105,54 @@ export function createAsyncResultBuilder<T, E>(
     },
     map: <R>(fn: (value: T) => R) => {
       const op: Op = (r: Result<unknown, unknown>) => mapOp(r as Result<T, E>, fn);
+
       return createAsyncResultBuilder<R, E>(promise as unknown as AsyncResult<R, E>, [..._ops, op]);
     },
     mapErr: <F>(fn: (error: E) => F) => {
       const op: Op = (r: Result<unknown, unknown>) => mapErr(r as Result<T, E>, fn);
+
       return createAsyncResultBuilder<T, F>(promise as unknown as AsyncResult<T, F>, [..._ops, op]);
     },
     andThen: <R>(fn: (value: T) => Result<R, E> | AsyncResult<R, E>) => {
       const op: Op = (r: Result<unknown, unknown>) => {
         const res = r as Result<T, E>;
+
         if (!res.ok) {
           return res;
         }
+
         return fn(res.value);
       };
+
       return createAsyncResultBuilder<R, E>(promise as unknown as AsyncResult<R, E>, [..._ops, op]);
     },
     orElse: <F>(fn: (error: E) => Result<T, F> | AsyncResult<T, F>) => {
       const op: Op = (r: Result<unknown, unknown>) => {
         const res = r as Result<T, E>;
+
         if (res.ok) {
           return res;
         }
+
         return fn(res.error);
       };
+
       return createAsyncResultBuilder<T, F>(promise as unknown as AsyncResult<T, F>, [..._ops, op]);
     },
     tap: (fn: (value: T) => void) => {
       const op: Op = (r: Result<unknown, unknown>) => tapOp(r as Result<T, E>, fn);
+
       return createAsyncResultBuilder<T, E>(promise, [..._ops, op]);
     },
     tapErr: (fn: (error: E) => void) => {
       const op: Op = (r: Result<unknown, unknown>) => tapErrOp(r as Result<T, E>, fn);
+
       return createAsyncResultBuilder<T, E>(promise, [..._ops, op]);
     },
     context: <C extends Record<string, unknown>>(message: string, help?: string, meta?: C) => {
       const op: Op = (r: Result<unknown, unknown>) =>
         contextOp(r as Result<T, E>, message, help, meta);
+
       return createAsyncResultBuilder<T, Report<C>>(
         promise as unknown as AsyncResult<T, Report<C>>,
         [..._ops, op],
@@ -224,12 +237,15 @@ export const AsyncResultBuilder = {
       Promise.all(results).then((resolved) => {
         // biome-ignore lint/suspicious/noExplicitAny: accumulator type evolves
         const values: any[] = [];
+
         for (const res of resolved) {
           if (!res.ok) {
             return Err(res.error) as never;
           }
+
           values.push(res.value);
         }
+
         return Ok(values) as never;
         // biome-ignore lint/suspicious/noExplicitAny: needed for complex generic inference
       }) as AsyncResult<any, any>,
@@ -252,15 +268,19 @@ export const AsyncResultBuilder = {
         Promise.resolve(Err(new Error("any() called with an empty array") as unknown as F)),
       );
     }
+
     return createAsyncResultBuilder(
       Promise.all(results).then((resolved) => {
         let lastErr: F | undefined;
+
         for (const res of resolved) {
           if (res.ok) {
             return res as Result<U, F>;
           }
+
           lastErr = res.error;
         }
+
         return Err(lastErr as F);
       }) as AsyncResult<U, F>,
     );

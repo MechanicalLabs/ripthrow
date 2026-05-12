@@ -48,7 +48,9 @@ export function createReport<C extends Record<string, unknown> = Record<string, 
 ): Report<C> {
   const err = new Error(message);
   err.name = "Report";
+
   const report = err as unknown as Report<C>;
+
   if (options.help !== undefined) {
     report.help = options.help;
   }
@@ -90,6 +92,7 @@ export function reportFrom<T extends Record<string, unknown> = Record<string, un
   }
 
   let baseMessage: string;
+
   if (message) {
     baseMessage = message;
   } else if (err instanceof Error) {

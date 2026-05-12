@@ -21,10 +21,12 @@ export function any<T, E>(results: Result<T, E>[]): Result<T, E> {
   }
 
   let lastErr: E | undefined;
+
   for (const res of results) {
     if (res.ok) {
       return res;
     }
+
     lastErr = res.error;
   }
 

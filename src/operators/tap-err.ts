@@ -19,5 +19,6 @@ export function tapErr<T, E>(result: Result<T, E>, fn: (error: E) => void): Resu
   if (!result.ok) {
     fn(result.error);
   }
+
   return result;
 }
