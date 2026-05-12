@@ -25,29 +25,24 @@ const orderDb: Order[] = [
 ];
 
 export function list(): Result<User[], AppError> {
-  return db.length ? Ok(db) : Err(Errors.userListFailed());
+  return db.length ? Ok(db) : Err(Errors.UserListFailed());
 }
 
 export function findById(id: string): Result<User, AppError> {
   const user = db.find((u) => u.id === id);
-
-  return user ? Ok(user) : Err(Errors.userNotFound(id));
+  return user ? Ok(user) : Err(Errors.UserNotFound(id));
 }
 
 export function create(data: { name: string; email: string }): Result<User, AppError> {
-  if (!data.name) return Err(Errors.nameRequired());
-
-  if (!data.email) return Err(Errors.emailRequired());
+  if (!data.name) return Err(Errors.NameRequired());
+  if (!data.email) return Err(Errors.EmailRequired());
 
   const user: User = { id: String(db.length + 1), ...data };
-
   db.push(user);
-
   return Ok(user);
 }
 
 export function findOrders(userId: string): Result<Order[], AppError> {
-  if (!db.some((u) => u.id === userId)) return Err(Errors.userOrdersFailed(userId));
-  
+  if (!db.some((u) => u.id === userId)) return Err(Errors.UserNotFound(userId));
   return Ok(orderDb.filter((o) => o.userId === userId));
 }
