@@ -36,21 +36,3 @@ jobs:
 
       - name: Tests
         run: bun test
-
-      - name: Update Bundle Size Badge
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          BYTES=$(bun build ./src/index.ts --minify | wc -c)
-          RAW_SIZE=$(echo "scale=2; $BYTES/1024" | bc)
-          ROUNDED_SIZE=$(printf "%.1f" $RAW_SIZE)
-          SAFE_SIZE="~$ROUNDED_SIZE""_KB"
-
-          sed -i "s/bundle_size-.*-blue/bundle_size-$SAFE_SIZE-blue/g" README.md
-
-          if [[ -n "$(git status --porcelain README.md)" ]]; then
-            git config --global user.name "github-actions[bot]"
-            git config --global user.email "github-actions[bot]@users.noreply.github.com"
-            git add README.md
-            git commit -m "docs: update bundle size to $SAFE_SIZE [skip ci]"
-            git push
-          fi
