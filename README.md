@@ -11,6 +11,8 @@
 
 `ripthrow` is a lightweight library inspired by Rust's `Result` type and the proposed ECMAScript `?=` operator. It allows you to handle success and failure in a structured way, avoiding `try/catch` blocks and making error states explicit in your types.
 
+![Example code using ripthrow](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/vtrci8dk4c5mp3mvmsep.png)
+
 ## Installation
 
 ```bash
@@ -67,6 +69,10 @@ Handling errors in TypeScript with native exceptions is inherently unpredictable
 Handling errors with exceptions can lead to "hidden" control flows. `ripthrow` forces you to acknowledge potential failures, leading to more resilient applications.
 
 While there are other libraries, `ripthrow` is designed to be a lightweight "missing operator" for modern TypeScript, focusing on minimal overhead and native safety.
+
+<img width="858" height="208" alt="matchErr feature showcase" src="https://github.com/user-attachments/assets/8971da15-e0d8-4f50-ae4d-1e8909a75c09" />
+
+> The image presents an usage of `matchErr` utility. It's failing because there's a missing handler for `AuthError`.
 
 ### Comparison: ripthrow vs neverthrow
 
