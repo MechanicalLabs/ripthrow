@@ -150,17 +150,16 @@ export function createError<A extends unknown[], N extends string, M = Record<st
     const typedErr = err as unknown as TypedError<A, N, M>;
 
     // biome-ignore lint/suspicious/noExplicitAny: readonly properties on TypedError
-    (typedErr as any).args = args;
-    // biome-ignore lint/suspicious/noExplicitAny: readonly properties on TypedError
-    (typedErr as any).kind = name;
-    // biome-ignore lint/suspicious/noExplicitAny: readonly properties on TypedError
-    (typedErr as any)._metadata = _metadata;
+    const mutableErr = typedErr as any;
+
+    mutableErr.args = args;
+    mutableErr.kind = name;
+    mutableErr._metadata = _metadata;
 
     Object.defineProperty(typedErr, $errorTag, { value: tag });
 
     if (help) {
-      // biome-ignore lint/suspicious/noExplicitAny: readonly properties on TypedError
-      (typedErr as any).help = help(...args);
+      mutableErr.help = help(...args);
     }
 
     return typedErr;
