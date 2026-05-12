@@ -93,13 +93,13 @@ type ErrorFactories<T extends ErrDefMap> = {
  */
 export function createErrors<T extends ErrDefMap>(defs: T): ErrorFactories<T> {
   // biome-ignore lint/suspicious/noExplicitAny: internal storage of factories
-  const result: Record<string, ErrFactory<unknown[], string, any>> = {};
+  const factories: Record<string, ErrFactory<unknown[], string, any>> = {};
 
-  for (const [name, def] of Object.entries(defs)) {
-    result[name] = createError(name, def.message, def.help, def._metadata);
+  for (const [name, definition] of Object.entries(defs)) {
+    factories[name] = createError(name, definition.message, definition.help, definition._metadata);
   }
 
-  return result as unknown as ErrorFactories<T>;
+  return factories as unknown as ErrorFactories<T>;
 }
 
 /**
@@ -147,22 +147,23 @@ export function createError<A extends unknown[], N extends string, M = Record<st
     const err = new Error(message(...args));
     err.name = name;
 
-    const te = err as unknown as TypedError<A, N, M>;
+    const typedErr = err as unknown as TypedError<A, N, M>;
 
     // biome-ignore lint/suspicious/noExplicitAny: readonly properties on TypedError
-    const assign = te as any;
+    (typedErr as any).args = args;
+    // biome-ignore lint/suspicious/noExplicitAny: readonly properties on TypedError
+    (typedErr as any).kind = name;
+    // biome-ignore lint/suspicious/noExplicitAny: readonly properties on TypedError
+    (typedErr as any)._metadata = _metadata;
 
-    assign.args = args;
-    assign.kind = name;
-    assign._metadata = _metadata;
-
-    Object.defineProperty(te, $errorTag, { value: tag });
+    Object.defineProperty(typedErr, $errorTag, { value: tag });
 
     if (help) {
-      assign.help = help(...args);
+      // biome-ignore lint/suspicious/noExplicitAny: readonly properties on TypedError
+      (typedErr as any).help = help(...args);
     }
 
-    return te;
+    return typedErr;
   };
 
   Object.defineProperty(factory, $class, { value: tag });
@@ -276,9 +277,9 @@ export function matchErr<T, E>(result: Result<T, E>): MatchErrBuilder<T, E, neve
     const error = result.error;
 
     for (const entry of handlers) {
-      const r = entry.execute(error);
-      if (r !== noMatch) {
-        return r;
+      const handlerResult = entry.execute(error);
+      if (handlerResult !== noMatch) {
+        return handlerResult;
       }
     }
 
@@ -287,8 +288,8 @@ export function matchErr<T, E>(result: Result<T, E>): MatchErrBuilder<T, E, neve
 
   // biome-ignore lint/suspicious/noExplicitAny: internal builder with complex generics
   const builder: any = {
-    on: (def: unknown, handler: unknown) => {
-      const tagOrClass = (def as { readonly [$class]: unknown })[$class];
+    on: (errorFactory: unknown, handler: unknown) => {
+      const tagOrClass = (errorFactory as { readonly [$class]: unknown })[$class];
 
       handlers.push({
         execute: (err: unknown) => {
