@@ -40,10 +40,26 @@ interface ErrDefEntry {
 
 type ErrDefMap = Record<string, ErrDefEntry>;
 
-declare const exhaustiveCheck: unique symbol;
 // biome-ignore lint/suspicious/noExplicitAny: needed to match any metadata type
 type TypedKinds<E> = E extends TypedError<unknown[], infer K, any> ? K : never;
-type AllTypedKindsHandled<E, Handled extends string> = TypedKinds<E> extends Handled ? true : false;
+
+/**
+ * Computes which error kinds have NOT been handled yet.
+ * Used in type-level exhaustive checking for .exhaustive().
+ */
+type UnhandledKinds<E, Handled extends string> = Exclude<TypedKinds<E>, Handled>;
+
+/**
+ * Branded type that surfaces the MISSING error handler name(s) in
+ * TypeScript compiler errors when .exhaustive() is called with unhandled cases.
+ *
+ * This is a type-level indicator only - it has no runtime representation.
+ * When you see `MissingHandler<"DbError">` in a type error, it means you
+ * need to add `.on(Errors.DbError, ...)` to your matchErr chain.
+ */
+interface MissingHandler<in out K extends string> {
+  readonly __missingHandler: K;
+}
 
 type ErrorFactories<T extends ErrDefMap> = {
   [K in keyof T & string]: ErrFactory<
@@ -237,10 +253,13 @@ export interface MatchErrBuilder<T, E, R, Handled extends string = never> {
 
   /**
    * Ensures all typed errors from a createErrors set are handled.
+   *
+   * If not all error kinds are handled, TypeScript will show an error
+   * like `MissingHandler<"DbError">` indicating exactly which handler is missing.
    */
-  exhaustive: () => AllTypedKindsHandled<E, Handled> extends true
+  exhaustive: () => [UnhandledKinds<E, Handled>] extends [never]
     ? T | R
-    : { readonly [exhaustiveCheck]: typeof exhaustiveCheck };
+    : MissingHandler<UnhandledKinds<E, Handled>>;
 }
 
 /**
