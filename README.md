@@ -184,8 +184,8 @@ Higher ops/s = faster. Latency is per-operation (lower is better).
 
 | Pattern | ops/s | Latency |
 |---------|------:|--------:|
-| `context()` wrap | 1,289,980 | 931.3 ns |
-| `context()` with help | 1,268,337 | 943.6 ns |
+| `note()` (plain Err) | 1,524,382 | 799.9 ns |
+| `note()` (existing Report) | 733,049 | 1629.7 ns |
 
 > Creating structured `Report` objects has the same cost as `new Error` (~1 µs).
 

@@ -120,23 +120,24 @@ const result = ResultBuilder.safe(() => JSON.parse('{"a": 1}'))
   .unwrap();
 ```
 
-### Attaching Context
+### Adding Notes
 
 ```typescript
 import { ResultBuilder } from "ripthrow";
 
 const result = ResultBuilder.safe(() => JSON.parse(input))
-  .context("Invalid JSON", "Check the file format")
+  .note("Invalid JSON")
   .unwrapOr({});
 ```
 
-Optionally attach metadata (merged with any `_metadata` from the original error):
+Notes accumulate when called multiple times:
 
 ```typescript
 const result = ResultBuilder.safe(() => fetch("/api/user"))
-  .context("Request failed", "Check your network", { status: 502 })
+  .note("Request failed")
+  .note("Check your network")
   .unwrapOr(null);
-// Report.context → { status: 502 }
+// Report.notes → ["Request failed", "Check your network"]
 ```
 
 Combine multiple results easily:
@@ -245,7 +246,7 @@ const Errors = createErrors({
 });
 ```
 
-When enriched via `.context()`, the `_metadata` is merged into the resulting `Report.context`.
+When enriched via `createReport()` or `reportFrom()`, the `_metadata` is merged into the resulting `Report.context`.
 
 ### Wrapping external errors with `wrapError`
 

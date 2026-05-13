@@ -26,23 +26,23 @@ const res = safe(() => doSomething());
 const wrapped = mapErr(res, (e) => new CustomError(e.message));
 ```
 
-### context
+### note
 
-Attach context to an error, converting it into a `Report` with a help message.
+Append contextual notes to an error without overwriting its message or help text.
 
 ```typescript
-import { safe, context } from "ripthrow";
+import { safe, note } from "ripthrow";
 
 const res = safe(() => JSON.parse(input));
-const wrapped = context(res, "Failed to parse config", "Check your JSON syntax");
-// Result<unknown, Report> — error is now a Report with .message, .help, .cause
+const wrapped = note(res, "Failed to parse config");
+// Result<unknown, Report> — error is now a Report with .notes: ["Failed to parse config"]
 ```
 
-Optionally attach metadata (merged with any `_metadata` from the original error):
+Notes accumulate when called multiple times:
 
 ```typescript
-const wrapped = context(res, "Request failed", undefined, { status: 502 });
-// Report.context → { status: 502 }
+const wrapped = note(note(res, "step 1"), "step 2");
+// Report.notes → ["step 1", "step 2"]
 ```
 
 ## Chaining
@@ -114,7 +114,7 @@ Or use `ResultBuilder` convenience constructors:
 import { ResultBuilder } from "ripthrow";
 
 const result = ResultBuilder.safe(() => JSON.parse('{"a":1}'))
-  .context("Invalid config")
+  .note("Invalid config")
   .andThen((data: any) => Ok(data.a))
   .unwrapOr(0);
 ```

@@ -57,37 +57,35 @@ function parseConfig(raw: string) {
 }
 ```
 
-## Enriching Errors with `context`
+## Enriching Errors with `note`
 
-The `context` operator wraps an error into a `Report`, preserving the original error as `.cause`:
+The `note` operator appends contextual notes to an error without overwriting its message or help text. It wraps the error in a `Report` if it isn't one already:
 
 ```typescript
-import { safe, context } from "ripthrow";
+import { safe, note } from "ripthrow";
 
-const result = context(
+const result = note(
   safe(() => JSON.parse(raw)),
   "Failed to parse config",
-  "Check your JSON syntax",
 );
+// Report.notes → ["Failed to parse config"]
 ```
 
-You can also pass metadata — merged with any `_metadata` from the original error:
+Notes accumulate:
 
 ```typescript
-const result = context(
-  safe(() => JSON.parse(raw)),
-  "Failed to parse config",
-  "Check your JSON syntax",
-  { status: 400 },
+const result = note(
+  note(safe(() => JSON.parse(raw)), "Step 1 failed"),
+  "Step 2 failed",
 );
-// Report.context → { status: 400 }
+// Report.notes → ["Step 1 failed", "Step 2 failed"]
 ```
 
 Or via the builder API:
 
 ```typescript
 build(safe(() => JSON.parse(raw)))
-  .context("Failed to parse config", "Check your JSON syntax", { status: 400 });
+  .note("Failed to parse config");
 ```
 
 ## Fluent Chaining with `ResultBuilder`
@@ -98,7 +96,7 @@ Chain operations with the builder API for more readable code:
 import { ResultBuilder } from "ripthrow";
 
 const name = ResultBuilder.safe(() => JSON.parse(input))
-  .context("Invalid JSON", "Check the input format")
+  .note("Invalid JSON")
   .map((data: any) => data.user?.name ?? "Anonymous")
   .unwrap();
 ```
@@ -109,7 +107,7 @@ Or use the `build()` function to start from an existing `Result`:
 import { safe, build } from "ripthrow";
 
 const name = build(safe(() => JSON.parse(input)))
-  .context("Invalid JSON", "Check the input format")
+  .note("Invalid JSON")
   .map((data: any) => data.user?.name ?? "Anonymous")
   .unwrap();
 ```
@@ -140,13 +138,13 @@ A real-world pipeline combining multiple patterns:
 import { ResultBuilder } from "ripthrow";
 
 const result = ResultBuilder.safe(() => JSON.parse(raw))
-  .context("Parse error", "Ensure valid JSON")
+  .note("Parse error")
   .andThen((data: any) =>
     data.id
       ? ResultBuilder.ok(data)
       : ResultBuilder.err("Missing id field"),
   )
-  .context("Validation error")
+  .note("Validation error")
   .map((data: any) => ({ id: data.id, name: data.name }))
   .unwrapOr({ id: "", name: "fallback" });
 ```
@@ -212,7 +210,7 @@ const Errors = createErrors({
 });
 ```
 
-When enriched via `.context()`, the `_metadata` is merged into the `Report.context`. Use `kindOf()` to extract the `.kind` from any ripthrow error (traverses `.cause` for `Report`).
+When enriched via `createReport()` or `reportFrom()`, the `_metadata` is merged into the `Report.context`. Use `kindOf()` to extract the `.kind` from any ripthrow error (traverses `.cause` for `Report`).
 
 ## Wrapping Library Errors
 

@@ -10,7 +10,7 @@ import {
   mapErr,
   andThen,
   orElse,
-  context,
+  note,
   all,
   any,
   build,
@@ -142,8 +142,8 @@ bench
       .unwrapOr(0),
   )
 
-  .add("context() wrap", () => context(Err("fail"), "wrapped"))
-  .add("context() with help", () => context(Err("fail"), "wrapped", "try again"))
+  .add("note() (plain Err)", () => note(Err("fail"), "something went wrong"))
+  .add("note() (existing Report)", () => note(note(Err("fail"), "step 1"), "step 2"))
 
   .add("all(5 ok)", () => all([Ok(1), Ok(2), Ok(3), Ok(4), Ok(SAMPLE_VALUE)]))
   .add("all(5, last err)", () => all([Ok(1), Ok(2), Err("x"), Ok(4), Ok(SAMPLE_VALUE)]))
