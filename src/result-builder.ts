@@ -7,6 +7,7 @@ import {
   context as contextOp,
   mapErr,
   map as mapOp,
+  note as noteOp,
   orElse,
   tapErr as tapErrOp,
   tap as tapOp,
@@ -86,12 +87,29 @@ export interface ResultBuilder<T, E> {
 
   /**
    * Attaches context to the error if it exists.
+   *
+   * @deprecated Use {@link ResultBuilder.note} instead, which preserves the original
+   * error message and help text while accumulating notes.
    */
   context: (
     message: string,
     help?: string,
     meta?: Record<string, unknown>,
   ) => ResultBuilder<T, Report>;
+
+  /**
+   * Appends a contextual note to the error.
+   *
+   * If the error is already a `Report`, the note is appended to its `notes` array.
+   * The original `message` and `help` are preserved.
+   *
+   * @example
+   * build(safe(fn))
+   *   .note("failed to fetch from db")
+   *   .note("user id: 42")
+   *   .unwrapOr(default)
+   */
+  note: (msg: string) => ResultBuilder<T, Report>;
 }
 
 /**
@@ -134,6 +152,7 @@ export function createResultBuilder<T, E>(result: Result<T, E>): ResultBuilder<T
     unwrap: () => unwrap(result),
     context: (message: string, help?: string, meta?: Record<string, unknown>) =>
       createResultBuilder(contextOp(result, message, help, meta)),
+    note: (msg: string) => createResultBuilder(noteOp(result, msg)),
   };
   return builder;
 }

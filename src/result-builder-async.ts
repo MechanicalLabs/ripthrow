@@ -7,6 +7,7 @@ import {
   context as contextOp,
   mapErr,
   map as mapOp,
+  note as noteOp,
   tapErr as tapErrOp,
   tap as tapOp,
 } from "./operators";
@@ -43,11 +44,18 @@ export interface AsyncResultBuilder<T, E> {
   orElse: <F>(fn: (error: E) => Result<T, F> | AsyncResult<T, F>) => AsyncResultBuilder<T, F>;
   tap: (fn: (value: T) => void) => AsyncResultBuilder<T, E>;
   tapErr: (fn: (error: E) => void) => AsyncResultBuilder<T, E>;
+  /** @deprecated Use {@link AsyncResultBuilder.note} instead. */
   context: <C extends Record<string, unknown>>(
     message: string,
     help?: string,
     meta?: C,
   ) => AsyncResultBuilder<T, Report<C>>;
+
+  /**
+   * Appends a contextual note to the error.
+   * The original `message` and `help` are preserved.
+   */
+  note: (msg: string) => AsyncResultBuilder<T, Report>;
   match: <R>(handlers: { ok: (value: T) => R; err: (error: E) => R }) => Promise<R>;
   unwrapOr: (defaultValue: T) => Promise<T>;
   unwrap: () => Promise<T>;
@@ -157,6 +165,14 @@ export function createAsyncResultBuilder<T, E>(
         promise as unknown as AsyncResult<T, Report<C>>,
         [..._ops, op],
       );
+    },
+    note: (msg: string) => {
+      const op: Op = (r: Result<unknown, unknown>) => noteOp(r as Result<T, E>, msg);
+
+      return createAsyncResultBuilder<T, Report>(promise as unknown as AsyncResult<T, Report>, [
+        ..._ops,
+        op,
+      ]);
     },
     match: <R>(handlers: { ok: (value: T) => R; err: (error: E) => R }) =>
       execute().then((r) => match(r, handlers)) as Promise<R>,

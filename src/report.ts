@@ -11,6 +11,8 @@ export interface ReportOptions<C extends Record<string, unknown> = Record<string
   help?: string | undefined;
   /** Additional key-value pairs to provide more context. */
   context?: C | undefined;
+  /** A list of contextual notes accumulated during error propagation. */
+  notes?: string[] | undefined;
 }
 
 /**
@@ -29,6 +31,8 @@ export interface Report<C extends Record<string, unknown> = Record<string, unkno
   help?: string;
   /** Additional key-value pairs to provide more context. */
   context?: C;
+  /** A list of contextual notes accumulated during error propagation. */
+  notes?: string[];
   /** The underlying cause of the error. */
   cause?: unknown;
   /** The stack trace. */
@@ -60,6 +64,9 @@ export function createReport<C extends Record<string, unknown> = Record<string, 
   if (options.cause) {
     report.cause = options.cause;
   }
+  if (options.notes !== undefined) {
+    report.notes = options.notes;
+  }
   return report;
 }
 
@@ -87,7 +94,14 @@ export function reportFrom<T extends Record<string, unknown> = Record<string, un
   message?: string,
   options: ReportOptions<T> = {},
 ): Report<T> {
-  if (isReport(err) && !message && !options.help && !options.context) {
+  if (
+    isReport(err) &&
+    !message &&
+    !options.help &&
+    !options.context &&
+    !options.notes &&
+    !options.cause
+  ) {
     return err as Report<T>;
   }
 
@@ -101,5 +115,20 @@ export function reportFrom<T extends Record<string, unknown> = Record<string, un
     baseMessage = String(err);
   }
 
-  return createReport(baseMessage, { cause: err, ...options });
+  let existingNotes: string[] = [];
+  if (isReport(err) && err.notes) {
+    existingNotes = err.notes;
+  }
+
+  const mergedNotes = [...existingNotes, ...(options.notes || [])];
+  let notes: string[] | undefined;
+  if (mergedNotes.length > 0) {
+    notes = mergedNotes;
+  }
+
+  return createReport(baseMessage, {
+    cause: err,
+    ...options,
+    notes,
+  });
 }

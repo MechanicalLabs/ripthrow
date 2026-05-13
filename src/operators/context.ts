@@ -5,6 +5,11 @@ import { mapErr } from "./map-err";
 /**
  * Attaches context to a Result's error, converting it to a Report if it isn't one already.
  *
+ * @deprecated Use `note()` to add contextual information without overwriting the error message,
+ * or use `mapErr()` + `createReport()` / `reportFrom()` for full control.
+ * Unlike `context()`, `note()` preserves the original `message` and `help`,
+ * and supports accumulating multiple notes via an array.
+ *
  * @template T The type of the success value.
  * @template E The type of the error value.
  * @template C The type of the metadata.

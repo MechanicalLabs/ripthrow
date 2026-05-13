@@ -10,7 +10,7 @@
 
 export { match, unwrap, unwrapOr } from "./consumers";
 export { bail, Err, isErr, isOk, Ok, safe, safeAsync } from "./factories";
-export { andThen, context, map, mapErr, orElse, tap, tapErr } from "./operators";
+export { andThen, context, map, mapErr, note, orElse, tap, tapErr } from "./operators";
 export type { ErrFactory, MatchErrBuilder } from "./pattern";
 export { createError, createErrors, matchErr, wrapError } from "./pattern";
 export type { Report, ReportOptions } from "./report";
